@@ -36,10 +36,10 @@
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.7.5">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.7.5">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.7.5">
-<link rel="manifest" href="./manifest.webmanifest?v=1.7.5">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.8.0">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.8.0">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.8.0">
+<link rel="manifest" href="./manifest.webmanifest?v=1.8.0">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -178,7 +178,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.7.5';
+const APP_VERSION = '1.8.0';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -1479,26 +1479,176 @@ const descargarApp = () => {
   }, 1000);
 };
 
+// ====== PARSER COMPATIBLE CON OTRAS APPS ======
+// Detecta y parsea un mensaje de la app Figuri (figuri.app), donde los
+// usuarios comparten la lista de "Me faltan" / "Repetidas" en formato
+// texto plano. Devuelve { marcadas, repetidas } calculando lo que tiene
+// el amigo (= todas las del álbum menos las faltantes).
+const esMensajeFiguri = (texto) => {
+  if (!texto || typeof texto !== 'string') return false;
+  return /figuri\.app|Figuri|Me faltan \(\d|Repetidas \(\d/i.test(texto);
+};
+
+const parseFiguriMessage = (texto) => {
+  if (!esMensajeFiguri(texto)) return null;
+
+  const teamCodes = new Set(todosLosEquipos.map(eq => eq.code));
+  const faltantes = new Set();
+  const repes = {};
+  let faltaDobleCero = false;
+  let dobleCeroRepe = 0;
+  let seccion = 'none'; // 'faltantes' | 'repes' | 'none'
+
+  const lineas = texto.split(/\r?\n/);
+  for (const lineaRaw of lineas) {
+    const linea = lineaRaw.trim();
+    if (!linea) continue;
+
+    // Cambio de sección (encabezados típicos de Figuri)
+    if (/Me faltan|faltantes|❌/i.test(linea)) { seccion = 'faltantes'; continue; }
+    if (/Repetidas|Repes|🔄/i.test(linea) && /\(\d+\)/.test(linea)) { seccion = 'repes'; continue; }
+
+    // "Special: 00" → doble cero
+    const specialMatch = linea.match(/^Special\s*:\s*0?0(?:\b|$)/i);
+    if (specialMatch) {
+      if (seccion === 'faltantes') faltaDobleCero = true;
+      else if (seccion === 'repes') dobleCeroRepe++;
+      continue;
+    }
+
+    // Líneas de FWC: "Tournament (FWC): 1, 2, 3" / "Host Countries and Cities (FWC): 6, 7, 8" / etc.
+    const fwcMatch = linea.match(/\(FWC\)\s*:\s*(.+)$/i);
+    if (fwcMatch) {
+      const items = fwcMatch[1].split(',').map(s => s.trim());
+      items.forEach(item => {
+        const m = item.match(/^(\d+)(?:\s*\(?\s*x\s*(\d+)\s*\)?)?/i);
+        if (!m) return;
+        const num = parseInt(m[1], 10);
+        const qty = m[2] ? parseInt(m[2], 10) : 1;
+        if (!Number.isFinite(num) || num < 1 || num > FWC_TOTAL) return;
+        const id = `FWC${num}`;
+        if (seccion === 'faltantes') faltantes.add(id);
+        else if (seccion === 'repes') repes[id] = (repes[id] || 0) + qty;
+      });
+      continue;
+    }
+
+    // Líneas de CC (Coca-Cola): "(CC): 1, 2, 3"
+    const ccMatch = linea.match(/\(CC\)\s*:\s*(.+)$/i);
+    if (ccMatch) {
+      const items = ccMatch[1].split(',').map(s => s.trim());
+      items.forEach(item => {
+        const m = item.match(/^(\d+)(?:\s*\(?\s*x\s*(\d+)\s*\)?)?/i);
+        if (!m) return;
+        const num = parseInt(m[1], 10);
+        const qty = m[2] ? parseInt(m[2], 10) : 1;
+        if (!Number.isFinite(num) || num < 1 || num > CC_TOTAL) return;
+        const id = `CC${num}`;
+        if (seccion === 'faltantes') faltantes.add(id);
+        else if (seccion === 'repes') repes[id] = (repes[id] || 0) + qty;
+      });
+      continue;
+    }
+
+    // Líneas de equipo: "🇲🇽 MEX: 1, 2, 3, 4, 5" o "MEX: 1 (x2), 3"
+    const teamMatch = linea.match(/(?:^|\s)([A-Z]{3})\s*:\s*(.+)$/);
+    if (teamMatch) {
+      const code = teamMatch[1];
+      if (!teamCodes.has(code)) continue;
+      const items = teamMatch[2].split(',').map(s => s.trim());
+      items.forEach(item => {
+        const m = item.match(/^(\d+)(?:\s*\(?\s*x\s*(\d+)\s*\)?)?/i);
+        if (!m) return;
+        const num = parseInt(m[1], 10);
+        const qty = m[2] ? parseInt(m[2], 10) : 1;
+        if (!Number.isFinite(num) || num < 1 || num > FIGURITAS) return;
+        const id = `${code}${num}`;
+        if (seccion === 'faltantes') faltantes.add(id);
+        else if (seccion === 'repes') repes[id] = (repes[id] || 0) + qty;
+      });
+      continue;
+    }
+  }
+
+  // Si no parseamos nada útil, no es un mensaje válido
+  if (faltantes.size === 0 && !faltaDobleCero && dobleCeroRepe === 0 && Object.keys(repes).length === 0) {
+    return null;
+  }
+
+  // Calculamos qué tiene el amigo = TODAS las del álbum menos las que le faltan.
+  // Si solo había sección "repes" sin "faltantes", asumimos que tiene todas las
+  // que no están en la sección de repes (no es correcto pero es lo mejor que
+  // podemos inferir).
+  const marcadas = new Set();
+  ORDEN_FIGURITAS.forEach(id => {
+    if (id === DOBLE_CERO_ID) {
+      if (!faltaDobleCero) marcadas.add(id);
+    } else {
+      if (!faltantes.has(id)) marcadas.add(id);
+    }
+  });
+
+  if (dobleCeroRepe > 0) repes[DOBLE_CERO_ID] = dobleCeroRepe;
+
+  return { marcadas, repetidas: repes };
+};
+
 const importarAmigo = (codigo) => {
   const data = decodificarEstado(codigo);
-  if (!data) {
-    alert('El código no es válido. Pegalo completo, empieza con AM26|');
+
+  if (data) {
+    // Flujo original AM26
+    if (!(data.nombre in amigos) && Object.keys(amigos).length >= MAX_AMIGOS) {
+      alert(`Ya tenés ${MAX_AMIGOS} amigos guardados (el máximo). Borrá alguno antes de agregar otro.`);
+      return;
+    }
+    amigos[data.nombre] = {
+      marcadas: [...data.tengo],
+      repetidas: data.repes,
+      fecha: Date.now(),
+    };
+    guardar();
+    chequearLogros();
+    render();
     return;
   }
-  // Si ya existe con ese nombre, lo sobreescribimos (actualización).
-  // Si es un amigo nuevo y ya alcanzamos el tope, avisamos.
-  if (!(data.nombre in amigos) && Object.keys(amigos).length >= MAX_AMIGOS) {
-    alert(`Ya tenés ${MAX_AMIGOS} amigos guardados (el máximo). Borrá alguno antes de agregar otro.`);
+
+  // Si no era AM26, probamos formato Figuri
+  if (esMensajeFiguri(codigo)) {
+    const figData = parseFiguriMessage(codigo);
+    if (!figData) {
+      alert('No pude leer ese mensaje de Figuri. Asegurate de pegarlo completo, desde "Me faltan" hasta el final.');
+      return;
+    }
+    const tienen = figData.marcadas.size;
+    const totalRepes = Object.values(figData.repetidas).reduce((s, c) => s + c, 0);
+    const ok = confirm(
+      `📋 Detectamos un mensaje de Figuri.\n\n` +
+      `📊 Tu amigo tiene ${tienen} de ${TOTAL_FIGURITAS} figuritas.\n` +
+      (totalRepes ? `🔄 Repetidas: ${totalRepes}\n` : '') +
+      `\n¿Querés agregarlo a tu lista de amigos?`
+    );
+    if (!ok) return;
+    const nombre = window.prompt('Figuri no incluye el nombre del que comparte.\n\n¿Cómo se llama tu amigo? (para identificarlo en tu lista)', '');
+    if (!nombre || !nombre.trim()) return;
+    const nombreSafe = nombre.trim().replace(/[:|]/g, ' ').slice(0, 30);
+    if (!(nombreSafe in amigos) && Object.keys(amigos).length >= MAX_AMIGOS) {
+      alert(`Ya tenés ${MAX_AMIGOS} amigos guardados (el máximo). Borrá alguno antes de agregar otro.`);
+      return;
+    }
+    amigos[nombreSafe] = {
+      marcadas: [...figData.marcadas],
+      repetidas: figData.repetidas,
+      fecha: Date.now(),
+    };
+    guardar();
+    chequearLogros();
+    render();
+    setTimeout(() => alert(`✅ Listo: "${nombreSafe}" agregado desde Figuri.`), 80);
     return;
   }
-  amigos[data.nombre] = {
-    marcadas: [...data.tengo],
-    repetidas: data.repes,
-    fecha: Date.now(),
-  };
-  guardar();
-  chequearLogros();
-  render();
+
+  alert('No pudimos leer ese mensaje.\n\nAceptamos:\n• Códigos AM26 de esta app (empiezan con AM26|)\n• Mensajes de Figuri (figuri.app)');
 };
 
 const borrarAmigo = (nombre) => {
@@ -2576,9 +2726,14 @@ const renderTabAmigos = () => {
     <div class="bg-amber-50 rounded-2xl p-5 mb-6">
       <div class="text-[10px] font-bold tracking-[0.15em] text-amber-700 uppercase mb-1">Paso 2 · Pegá el código de un amigo</div>
       <h3 class="text-xl font-bold tracking-tight text-gray-900 mb-2">Agregá amigos</h3>
-      <p class="text-sm text-gray-600 mb-3">Pegá el código que te mandó tu amigo. Podés pegar <strong>solo el código</strong> (empieza con <code class="bg-amber-100 px-1 rounded">AM26|</code>) o <strong>el mensaje completo de WhatsApp</strong>, la app lo detecta solo.</p>
+      <p class="text-sm text-gray-600 mb-3">Pegá el código o mensaje que te mandaron por WhatsApp. Funciona con:</p>
+      <ul class="text-xs text-gray-600 leading-relaxed mb-3 space-y-1 pl-1">
+        <li>✅ Códigos de esta app (empiezan con <code class="bg-amber-100 px-1 rounded">AM26|</code>)</li>
+        <li>✅ Mensajes completos de WhatsApp (la app detecta el código adentro)</li>
+        <li>✅ Mensajes de <strong>Figuri</strong> (figuri.app) — calcula qué tiene tu amigo y te pide su nombre</li>
+      </ul>
 
-      <textarea id="input-codigo-amigo" placeholder="Pegá acá el código o todo el mensaje que te mandaron por WhatsApp..." rows="4"
+      <textarea id="input-codigo-amigo" placeholder="Pegá acá el código o el mensaje completo..." rows="4"
         class="w-full px-3 py-2 border border-amber-300 rounded-lg text-xs leading-relaxed focus:outline-none focus:border-amber-500 mb-3 resize-none"></textarea>
 
       <button data-action="importar-amigo" class="w-full bg-amber-500 active:bg-amber-600 text-white font-semibold py-3 rounded-xl text-sm">
@@ -2614,7 +2769,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.7.5" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.8.0" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -2891,7 +3046,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.7.5" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.8.0" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
