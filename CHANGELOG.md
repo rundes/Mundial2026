@@ -1,5 +1,60 @@
 # Changelog
 
+## v1.9.9 — 2026-05-18 — Buscador robusto + +/- grandes + auto-colapsar completos
+
+### Buscador rediseñado de cero
+Reporte: en Android Chrome la lupa SVG se veía mal, hacer click cerraba
+el teclado a veces y la usabilidad era pobre. Causa probable:
+combinación de `type="search"` (que agrega una X de browser por default
+que choca con la nuestra) + SVG absolute-positioned dentro del input
+(en algunos browsers intercepta taps a pesar de `pointer-events:none`).
+
+Nuevo diseño deliberadamente plano y universal:
+- **`type="text"` + `inputmode="search"`** — el teclado de búsqueda
+  sale igual pero sin la X que mete el browser.
+- **Sin íconos absolute-positioned dentro del input**. La lupa 🔎 y la
+  palabra "Buscar" van arriba como header del bloque, no overlay.
+- **Botón "Limpiar ×" como texto separado** arriba a la derecha (sólo
+  visible cuando hay valor), no flotando sobre el input.
+- **`style="font-size: 16px"` inline** para que iOS no haga zoom al
+  tocar el input (regla universal, independiente de Tailwind).
+- Cero dependencias de quirks de browser específico.
+
+### Repetidas: botones más grandes y mejor ubicados
+- Las casillas de Repes dejan de ser `aspect-square` y pasan a
+  `min-height: 92px` (rectangulares). Los botones **−** y **+** ya
+  no flotan en `-bottom-1` (saltaban a la fila siguiente y eran
+  difíciles de tocar). Ahora viven **dentro del card**, abajo.
+- Tamaño de los botones: `w-5 h-5` (20 px) → **`w-9 h-9` (36 px)**.
+  Más cerca del mínimo recomendado de 44 px para tap targets.
+- Tipografía del +/− pasa de `text-[11px]` a `text-xl` (~20 px),
+  más visible.
+- El gap vertical del grid se reduce (ya no hace falta espacio para
+  los botones flotantes).
+
+### Equipos completos colapsan automáticamente
+- Cuando un equipo queda al 100% (las 20 figuritas marcadas), el card
+  se **colapsa automáticamente** a una vista compacta: bandera +
+  nombre + badge `✓ 20/20`. El listado de figuritas desaparece para
+  no saturar visualmente la pestaña Tengo.
+- El card completado se **destaca con el color del equipo** en el
+  borde (2 px) y en el badge. Cada selección queda visualmente
+  identificada.
+- Tocando el card compacto se expande a la vista completa por si
+  hay que desmarcar alguna figurita (en cuyo caso vuelve al modo
+  normal con todas las casillas). Hay un botón ▴ para volver a
+  colapsar manualmente.
+- Al re-completar el equipo (todas marcadas de nuevo), el card
+  vuelve a colapsarse automáticamente.
+- El filtro de búsqueda sigue funcionando sobre los cards compactos
+  (los `data-team-card` se mantienen).
+
+### Infra
+- Nuevo estado `equiposExpandidos: Set<string>` para tracking de
+  equipos completos manualmente expandidos. Se limpia al completar.
+- Acción nueva `toggle-expandir-equipo`.
+- Cache busting `?v=1.9.9` y `CACHE_VERSION = 'album-2026-v1.9.9'`.
+
 ## v1.9.8 — 2026-05-18 — Polish del buscador + números de figus más grandes
 
 ### Diseño del buscador
