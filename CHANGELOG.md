@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.2.2 — 2026-05-18
+
+- Trofeo más grande (ocupa ~75% del canvas), sin texto "2026" para que
+  no compita con el ícono a tamaño de home screen Android (96-144 px).
+  El nombre "Álbum 2026" ya aparece debajo del ícono en el launcher.
+- Más contraste: oro más brillante, fondo más oscuro, asas más prominentes.
+- Cache busting `?v=1.2.2` en todas las refs de íconos y manifest para
+  forzar refresh en navegadores que tengan los íconos viejos cacheados.
+- sw.js v1.2.2 con network-first para íconos y manifest (antes era
+  cache-first y se quedaban pegados los íconos viejos al actualizar).
+- theme-color del navegador alineado con el fondo del ícono.
+
+Importante: si ya instalaste la app en Android con la versión vieja
+(la pelota azul), Android cachea ese ícono en el launcher y no lo
+refresca solo. Para ver el trofeo nuevo: desinstalá la PWA de la
+pantalla de inicio (mantené apretado el ícono → Quitar/Desinstalar)
+y volvé a instalarla desde la URL.
+
 ## v1.2.1 — 2026-05-18
 
 - Rediseño del set de íconos: silueta de chalice (copa clásica con asas,
