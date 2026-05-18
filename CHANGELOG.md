@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.9.3 — 2026-05-18 — Fix WhatsApp en PWA + copiar solo el link
+
+### Fixes
+- **Compartir por WhatsApp desde la PWA instalada.** En modo standalone
+  (PWA agregada a pantalla de inicio en Android/iOS) el botón "Mandar
+  por WhatsApp" abría `wa.me` *dentro de la propia PWA* y no podía
+  pasarle el control a la app nativa de WhatsApp, dejando al usuario
+  sin poder elegir contacto. Ahora la función usa primero la **Web
+  Share API** (`navigator.share`) cuando está disponible: se abre el
+  sheet nativo del sistema, el usuario elige WhatsApp (o cualquier
+  otra app de mensajería instalada) y el mensaje sale con la
+  selección de contacto del propio WhatsApp. El método anterior con
+  `<a target="_blank">` queda como fallback para navegadores sin
+  Web Share API.
+- **Copiar solo el link corto** ahora copia únicamente la URL, sin el
+  encabezado `⚽ Haz click acá…` que se anteponía antes. El botón
+  decía "🔗 Solo copiar el link corto" pero estaba pegando un mensaje
+  multilínea. Si el usuario quiere mandar el mensaje completo, el
+  botón "Mandar por WhatsApp" arriba sigue armándolo.
+- Texto del aviso post-copia ajustado: "Link copiado" en vez de
+  "Copiado", para que sea claro qué quedó en el portapapeles.
+
+### Infra
+- Cache busting bumpeado a `?v=1.9.3` y
+  `CACHE_VERSION = 'album-2026-v1.9.3'`.
+
 ## v1.9.2 — 2026-05-18 — Nuevo set de íconos + disclaimers
 
 ### Ícono
