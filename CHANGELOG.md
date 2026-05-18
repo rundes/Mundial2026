@@ -1,5 +1,38 @@
 # Changelog
 
+## v1.9.6 — 2026-05-18 — Fix WhatsApp (parte 4): bypass del placeholder window
+
+### Fix
+- **El path real del bug estaba en `compartirAlbumPorLink`, no en
+  `compartirWhatsApp`.** Las correcciones de v1.9.3/4/5 no se
+  aplicaban porque cuando el shortener no estaba pre-cacheado, la
+  función abría una ventana placeholder (hack para mantener el gesto
+  del usuario en iOS Safari mientras esperaba el `cleanuri`) y la
+  navegaba a `wa.me/?text=...` *directamente*, salteándose todos los
+  caminos arreglados antes. Reportado: footer en v1.9.4, Android
+  Chrome → emojis como `�` + pantalla "Descargar WhatsApp".
+- Cambio: en **mobile (Android/iOS) o WebView embebido**, eliminamos
+  el hack de ventana placeholder por completo. Esperamos al shortener
+  *inline* (con timeout de 2 s para no colgar la UI si `cleanuri` no
+  responde) y mandamos por `compartirWhatsApp`, que en mobile usa
+  `whatsapp://send?text=...` directo al sistema operativo. Sin
+  redirect de wa.me que rompa el encoding ni placeholder que se
+  quede mostrando "Preparando link…".
+- En **desktop**, el hack de placeholder + wa.me se mantiene
+  (funciona bien ahí porque tiene tabs reales del navegador).
+
+### Por qué se rompió
+- El flujo "Mandar por WhatsApp" pasaba por `compartirAlbumPorLink`
+  → ventana placeholder → `win.location.href = waUrl`. Funcionó
+  hasta v1.8.x cuando el mensaje era corto y `wa.me` no se atragantaba.
+  Con el refactor de v1.9.0 (mensaje único con lista completa de
+  faltantes + link AM26 con el estado serializado), la URL pasó a ser
+  varios miles de caracteres y `wa.me` empezó a corromper emojis y
+  mostrar la pantalla de descarga aunque WhatsApp estuviera instalado.
+
+### Infra
+- Cache busting `?v=1.9.6` y `CACHE_VERSION = 'album-2026-v1.9.6'`.
+
 ## v1.9.5 — 2026-05-18 — Fix WhatsApp (parte 3): saltar wa.me en mobile
 
 ### Fix
