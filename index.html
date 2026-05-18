@@ -36,10 +36,10 @@
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.7.4">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.7.4">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.7.4">
-<link rel="manifest" href="./manifest.webmanifest?v=1.7.4">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.7.5">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.7.5">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.7.5">
+<link rel="manifest" href="./manifest.webmanifest?v=1.7.5">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -178,7 +178,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.7.4';
+const APP_VERSION = '1.7.5';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -1295,24 +1295,10 @@ const obtenerHtmlLimpio = () => {
 // URL pública de la app. Si algún día se cambia el dominio, basta tocar acá.
 const APP_URL = 'https://rundes.github.io/Mundial2026/';
 
+// Mensaje corto que acompaña al link. El URL NO va incluido acá: el preview
+// del link en WhatsApp ya muestra título, descripción e ícono (vía meta og:*).
 const mensajeInvitacion = () => {
-  return `⚽✨ MI ÁLBUM MUNDIAL 2026
-━━━━━━━━━━━━━━━━━━━━
-
-📲 La forma fácil de llevar tu álbum de figuritas del Mundial:
-
-✅ Marcá las que tenés con un toque
-🔄 Anotá tus repetidas
-📊 Mirá cuánto te falta para completar
-🤝 Coordiná cambios por WhatsApp
-📷 Mostrá un QR y sincronizá al toque
-🏆 Logros y datos del Mundial mientras vas pegando
-
-🔓 Gratis · Sin registro · Sin servidor
-📱 Funciona en cualquier celular o compu
-🛡️ Tus datos viven solo en tu dispositivo
-
-👉 ${APP_URL}`;
+  return `⚽ App gratis para llevar tu álbum del Mundial 2026. Marcás lo que tenés, anotás las repes y coordinás cambios por WhatsApp.`;
 };
 
 // ====== SHARES SEGMENTADOS (usados desde el FAB) ======
@@ -1434,8 +1420,9 @@ const cambiarSlideCarrusel = (idx) => {
 const compartirLinkApp = () => {
   const txt = mensajeInvitacion();
   // Web Share API: en mobile abre el share sheet nativo (WhatsApp, Mail,
-  // Instagram, Telegram, etc.). Cada app que recibe el link va a renderizar
-  // el preview usando los meta og:* del <head>.
+  // Instagram, Telegram, etc.). El link va SOLO en `url`, no en `text`,
+  // para que la app receptora no muestre el link duplicado. Cada app
+  // renderiza la tarjeta preview usando los meta og:* del <head>.
   if (navigator.share) {
     navigator.share({
       title: 'Mi Álbum Mundial 2026',
@@ -1443,12 +1430,14 @@ const compartirLinkApp = () => {
       url: APP_URL,
     }).catch((err) => {
       if (err && err.name === 'AbortError') return;
-      compartirWhatsApp(txt);
+      // Fallback: WhatsApp Web/Direct, donde sí hay que mandar todo
+      // junto porque wa.me solo acepta un parámetro `text`.
+      compartirWhatsApp(`${txt}\n\n${APP_URL}`);
     });
     return;
   }
-  // Sin Web Share API (desktop), abrimos WhatsApp Web con el mensaje.
-  compartirWhatsApp(txt);
+  // Sin Web Share API (desktop): mandamos por WhatsApp Web con todo junto.
+  compartirWhatsApp(`${txt}\n\n${APP_URL}`);
 };
 
 const compartirApp = () => {
@@ -2625,7 +2614,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.7.4" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.7.5" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -2902,7 +2891,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.7.4" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.7.5" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
