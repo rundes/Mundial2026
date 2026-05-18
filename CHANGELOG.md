@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.3.1 — 2026-05-18
+
+### Compartir lista — rediseño
+- **Botón "Compartir mi lista" único y genérico** reemplaza los tres
+  botones específicos para mamá / papá / grupo familiar. Ahora se
+  puede mandar a cualquier contacto (familia, amigos, primos,
+  compañeros del cole, etc.) con el mismo formato.
+- **Banderas de cada país** delante del nombre del equipo (emojis
+  Unicode 🇲🇽 🇧🇷 🇦🇷 🇫🇷 🏴󠁧󠁢󠁥󠁮󠁧󠁿 etc., con manejo especial
+  para Inglaterra y Escocia que usan banderas regionales).
+- **Mensaje unificado**: una sola lista que incluye:
+  - Encabezado con avance (X de 993, %, repes).
+  - Sección "🔍 FIGURITAS QUE ME FALTAN" para completar el álbum,
+    agrupada por Grupo A-L y separada por equipo con su bandera.
+  - Sección "🔄 REPETIDAS QUE TENGO" para intercambiar, mismo formato.
+  - Especiales (🏆 FWC, 🥤 CC) al final de cada sección.
+- Caso "álbum completo": mensaje celebratorio + listado de repes si
+  todavía hay para cambiar.
+- UI con paleta verde (en vez de rosa familiar) para alinear con el
+  ícono de WhatsApp y refuerza que es para cualquier contacto.
+
+### Limpieza
+- Removidas las funciones obsoletas `compartirFaltantes` y
+  `compartirRepetidas` que ya no se usaban desde la UI.
+- `compartirParaPadres` queda como alias de `compartirListaCompleta`
+  por compatibilidad.
+
+Cache busting v=1.3.1 + CACHE_VERSION='album-2026-v1.3.1'.
+
 ## v1.3.0 — 2026-05-18
 
 ### Funcionalidades nuevas
