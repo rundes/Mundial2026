@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.9.7 — 2026-05-18 — Buscador de equipos en Tengo y Repes
+
+### Nuevo
+- **Barra de búsqueda en las pestañas Tengo y Repes** para encontrar
+  rápido el equipo que querés marcar. Aparece arriba del listado de
+  grupos. Mientras tipeás, los equipos que no matchean desaparecen al
+  toque (sin re-renderizar el árbol completo, así no se pierde el
+  foco mientras escribís).
+- Matchea contra:
+  - Nombre del equipo (case-insensitive, sin acentos): "argentina",
+    "Argentina", "arg…"
+  - Código del equipo (3 letras): "ARG", "BRA", "USA"
+  - Letra del grupo: "A", "grupo A", "g a", "grupoA"
+  - Sección especial: "FWC", "trofeo", "mascota", "estadio" → muestra
+    el bloque FWC. "CC", "coca" → CC. "00", "doble cero", "tapa",
+    "holo", "brillo" → el bloque 00.
+  - Cualquier sub-string aplica: "uru" encuentra Uruguay, "epu" matchea
+    República Checa, etc.
+- Botón "×" para limpiar la búsqueda con un toque.
+- Si nada coincide, aparece un mensaje "🔎 No encontré nada con eso"
+  con sugerencias.
+- La búsqueda **persiste al marcar figuritas**: marcás una figurita de
+  Argentina, el listado se re-renderiza, y el filtro se vuelve a
+  aplicar automáticamente — seguís viendo solo Argentina.
+- El estado de búsqueda es **independiente por pestaña**: lo que
+  busques en Tengo no afecta a Repes y viceversa.
+
+### Infra
+- Filtrado por DOM (`display:none` sobre `[data-team-card]` /
+  `[data-group-section]` / `[data-special-section]`) en lugar de
+  re-renderizar el HTML completo. Mantiene el foco del teclado entre
+  pulsaciones y evita el flicker visual.
+- Cache busting `?v=1.9.7` y `CACHE_VERSION = 'album-2026-v1.9.7'`.
+
 ## v1.9.6 — 2026-05-18 — Fix WhatsApp (parte 4): bypass del placeholder window
 
 ### Fix
