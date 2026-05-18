@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+<title>Mi Álbum Mundial 2026</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+  textarea { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+  /* Inputs en iOS sin zoom automático al hacer focus (mínimo 16px) */
+  input, textarea { font-size: 16px !important; }
+  /* Previene selección de texto en botones (Safari) */
+  button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  /* Mejor scroll en iOS */
+  * { -webkit-overflow-scrolling: touch; }
+  /* Safe area para iPhones con notch */
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+</style>
+</head>
+<body class="bg-white text-gray-900">
+
+<div id="app"></div>
+
+<script>
+// ====== DETECCIÓN DE WEBVIEW EMBEBIDO ======
+// Cuando alguien abre el HTML desde WhatsApp/Instagram/Facebook en iPhone, la app
+// usa un WebView interno (no Safari real) que bloquea casi todas las acciones
+// de compartir. Detectamos esto y mostramos instrucciones para abrir en Safari.
+
+const detectarWebViewEmbebido = () => {
+  const ua = navigator.userAgent || '';
+  const esIOS = /iPad|iPhone|iPod/.test(ua);
+  if (!esIOS) {
+    // En Android los WebView de WhatsApp/Instagram también restringen pero menos.
+    // Solo nos enfocamos en iOS donde el problema es más grave.
+    const esAndroidWebView = /; wv\)/.test(ua);
+    return { esWebView: esAndroidWebView, esIOS: false };
+  }
+
+  // En iOS, Safari real tiene "Safari" en el UA. Los WebViews embebidos NO lo tienen.
+  // - Safari real: "Mozilla/5.0 ... Safari/605.1.15"
+  // - WhatsApp WebView: "Mozilla/5.0 ... Mobile/15E148" (sin "Safari/")
+  // - Instagram/FB: incluyen "Instagram" / "FBAN" / "FBAV" en el UA
+  const tieneSafariReal = /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  const esApp = /Instagram|FBAN|FBAV|FB_IAB|Line|MicroMessenger|WeChat/i.test(ua);
+  const esWhatsAppWebView = esIOS && !tieneSafariReal && !/CriOS|FxiOS|EdgiOS/.test(ua);
+
+  return {
+    esWebView: esApp || esWhatsAppWebView,
+    esIOS: true,
+    esWhatsApp: esWhatsAppWebView && !esApp,
+  };
+};
+
+const WEBVIEW_INFO = detectarWebViewEmbebido();
+
+const GRUPOS = {
+  A: [
+    { code: 'MEX', nombre: 'México', conf: 'CONCACAF', color: '#E8B04B' },
+    { code: 'RSA', nombre: 'Sudáfrica', conf: 'CAF', color: '#5BA055' },
+    { code: 'KOR', nombre: 'Corea del Sur', conf: 'AFC', color: '#D85A5A' },
+    { code: 'CZE', nombre: 'Rep. Checa', conf: 'UEFA', color: '#4A6FA5' },
+  ],
+  B: [
+    { code: 'CAN', nombre: 'Canadá', conf: 'CONCACAF', color: '#E8B04B' },
+    { code: 'BIH', nombre: 'Bosnia', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'QAT', nombre: 'Catar', conf: 'AFC', color: '#D85A5A' },
+    { code: 'SUI', nombre: 'Suiza', conf: 'UEFA', color: '#4A6FA5' },
+  ],
+  C: [
+    { code: 'BRA', nombre: 'Brasil', conf: 'CONMEBOL', color: '#75AADB' },
+    { code: 'MAR', nombre: 'Marruecos', conf: 'CAF', color: '#5BA055' },
+    { code: 'HAI', nombre: 'Haití', conf: 'CONCACAF', color: '#E8B04B' },
+    { code: 'SCO', nombre: 'Escocia', conf: 'UEFA', color: '#4A6FA5' },
+  ],
+  D: [
+    { code: 'USA', nombre: 'Estados Unidos', conf: 'CONCACAF', color: '#E8B04B' },
+    { code: 'PAR', nombre: 'Paraguay', conf: 'CONMEBOL', color: '#75AADB' },
+    { code: 'AUS', nombre: 'Australia', conf: 'AFC', color: '#D85A5A' },
+    { code: 'TUR', nombre: 'Turquía', conf: 'UEFA', color: '#4A6FA5' },
+  ],
+  E: [
+    { code: 'GER', nombre: 'Alemania', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'CUW', nombre: 'Curazao', conf: 'CONCACAF', color: '#E8B04B' },
+    { code: 'CIV', nombre: 'Costa de Marfil', conf: 'CAF', color: '#5BA055' },
+    { code: 'ECU', nombre: 'Ecuador', conf: 'CONMEBOL', color: '#75AADB' },
+  ],
+  F: [
+    { code: 'NED', nombre: 'Países Bajos', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'JPN', nombre: 'Japón', conf: 'AFC', color: '#D85A5A' },
+    { code: 'SWE', nombre: 'Suecia', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'TUN', nombre: 'Túnez', conf: 'CAF', color: '#5BA055' },
+  ],
+  G: [
+    { code: 'BEL', nombre: 'Bélgica', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'EGY', nombre: 'Egipto', conf: 'CAF', color: '#5BA055' },
+    { code: 'IRN', nombre: 'Irán', conf: 'AFC', color: '#D85A5A' },
+    { code: 'NZL', nombre: 'Nueva Zelanda', conf: 'OFC', color: '#8E6BB0' },
+  ],
+  H: [
+    { code: 'ESP', nombre: 'España', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'CPV', nombre: 'Cabo Verde', conf: 'CAF', color: '#5BA055' },
+    { code: 'KSA', nombre: 'Arabia Saudita', conf: 'AFC', color: '#D85A5A' },
+    { code: 'URU', nombre: 'Uruguay', conf: 'CONMEBOL', color: '#75AADB' },
+  ],
+  I: [
+    { code: 'FRA', nombre: 'Francia', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'SEN', nombre: 'Senegal', conf: 'CAF', color: '#5BA055' },
+    { code: 'IRQ', nombre: 'Irak', conf: 'AFC', color: '#D85A5A' },
+    { code: 'NOR', nombre: 'Noruega', conf: 'UEFA', color: '#4A6FA5' },
+  ],
+  J: [
+    { code: 'ARG', nombre: 'Argentina', conf: 'CONMEBOL', color: '#75AADB' },
+    { code: 'ALG', nombre: 'Argelia', conf: 'CAF', color: '#5BA055' },
+    { code: 'AUT', nombre: 'Austria', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'JOR', nombre: 'Jordania', conf: 'AFC', color: '#D85A5A' },
+  ],
+  K: [
+    { code: 'POR', nombre: 'Portugal', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'COD', nombre: 'RD del Congo', conf: 'CAF', color: '#5BA055' },
+    { code: 'UZB', nombre: 'Uzbekistán', conf: 'AFC', color: '#D85A5A' },
+    { code: 'COL', nombre: 'Colombia', conf: 'CONMEBOL', color: '#75AADB' },
+  ],
+  L: [
+    { code: 'ENG', nombre: 'Inglaterra', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'CRO', nombre: 'Croacia', conf: 'UEFA', color: '#4A6FA5' },
+    { code: 'GHA', nombre: 'Ghana', conf: 'CAF', color: '#5BA055' },
+    { code: 'PAN', nombre: 'Panamá', conf: 'CONCACAF', color: '#E8B04B' },
+  ],
+};
+
+const FIGURITAS = 20;
+const FWC_TOTAL = 19;
+const CC_TOTAL = 14;
+
+// Construyo el orden canónico de todas las figuritas para serializar/deserializar
+const ORDEN_FIGURITAS = (() => {
+  const lista = [];
+  Object.values(GRUPOS).flat().forEach(eq => {
+    for (let i = 1; i <= FIGURITAS; i++) lista.push(`${eq.code}${i}`);
+  });
+  for (let i = 1; i <= FWC_TOTAL; i++) lista.push(`FWC${i}`);
+  for (let i = 1; i <= CC_TOTAL; i++) lista.push(`CC${i}`);
+  return lista;
+})();
+
+const STORAGE_KEY_TENGO = 'album-mundial-2026';
+const STORAGE_KEY_REPES = 'album-mundial-2026-repes';
+const STORAGE_KEY_TAB = 'album-mundial-2026-tab';
+const STORAGE_KEY_NOMBRE = 'album-mundial-2026-nombre';
+const STORAGE_KEY_AMIGOS = 'album-mundial-2026-amigos';
+
+let marcadas = new Set();
+let repetidas = {};
+let tabActiva = 'tengo';
+let miNombre = '';
+let amigos = {}; // { nombre: { marcadas: [...], repetidas: {...} } }
+
+try {
+  const t = localStorage.getItem(STORAGE_KEY_TENGO);
+  if (t) marcadas = new Set(JSON.parse(t));
+  const r = localStorage.getItem(STORAGE_KEY_REPES);
+  if (r) repetidas = JSON.parse(r);
+  const tab = localStorage.getItem(STORAGE_KEY_TAB);
+  if (tab) tabActiva = tab;
+  const nm = localStorage.getItem(STORAGE_KEY_NOMBRE);
+  if (nm) miNombre = nm;
+  const am = localStorage.getItem(STORAGE_KEY_AMIGOS);
+  if (am) amigos = JSON.parse(am);
+} catch (e) {}
+
+const guardar = () => {
+  try {
+    localStorage.setItem(STORAGE_KEY_TENGO, JSON.stringify([...marcadas]));
+    localStorage.setItem(STORAGE_KEY_REPES, JSON.stringify(repetidas));
+    localStorage.setItem(STORAGE_KEY_TAB, tabActiva);
+    localStorage.setItem(STORAGE_KEY_NOMBRE, miNombre);
+    localStorage.setItem(STORAGE_KEY_AMIGOS, JSON.stringify(amigos));
+  } catch (e) {}
+};
+
+const todosLosEquipos = Object.values(GRUPOS).flat();
+
+// ====== CODIFICACIÓN COMPACTA ======
+// Genera un string compacto con el estado del álbum.
+// Formato: AM26:<nombre>:<base64-tengo>:<base64-repes>
+// tengo: cadena de 0/1 (993 bits) → comprimida a base64
+// repes: lista de pares "id:cantidad" separados por coma, comprimida
+
+const codificarEstado = (nombre, tengo, repes) => {
+  // bitmap de marcadas según ORDEN_FIGURITAS
+  const bits = ORDEN_FIGURITAS.map(id => tengo.has(id) ? '1' : '0').join('');
+  // pack en bytes
+  const bytes = [];
+  for (let i = 0; i < bits.length; i += 8) {
+    bytes.push(parseInt(bits.slice(i, i + 8).padEnd(8, '0'), 2));
+  }
+  // a base64
+  const tengoB64 = btoa(String.fromCharCode(...bytes));
+
+  // repes: solo las que tienen cantidad > 0
+  const repesPares = Object.entries(repes)
+    .filter(([_, c]) => c > 0)
+    .map(([id, c]) => `${id}.${c}`)
+    .join(',');
+
+  const nombreSafe = (nombre || 'amigo').replace(/[:|]/g, ' ').slice(0, 30);
+  return `AM26|${nombreSafe}|${tengoB64}|${repesPares}`;
+};
+
+const decodificarEstado = (codigo) => {
+  try {
+    if (!codigo || !codigo.startsWith('AM26|')) return null;
+    const partes = codigo.trim().split('|');
+    if (partes.length < 3) return null;
+    const nombre = partes[1] || 'amigo';
+    const tengoB64 = partes[2] || '';
+    const repesStr = partes[3] || '';
+
+    // decodificar bitmap
+    const binStr = atob(tengoB64);
+    const bytes = [];
+    for (let i = 0; i < binStr.length; i++) bytes.push(binStr.charCodeAt(i));
+    let bits = bytes.map(b => b.toString(2).padStart(8, '0')).join('');
+    bits = bits.slice(0, ORDEN_FIGURITAS.length);
+    const tengo = new Set();
+    for (let i = 0; i < bits.length; i++) {
+      if (bits[i] === '1') tengo.add(ORDEN_FIGURITAS[i]);
+    }
+
+    // decodificar repes
+    const repes = {};
+    if (repesStr) {
+      repesStr.split(',').forEach(par => {
+        const [id, cStr] = par.split('.');
+        const c = parseInt(cStr, 10);
+        if (id && c > 0) repes[id] = c;
+      });
+    }
+
+    return { nombre, tengo, repes };
+  } catch (e) {
+    return null;
+  }
+};
+
+// ====== CÁLCULOS ======
+
+const calcStats = () => {
+  const total = 48 * FIGURITAS + FWC_TOTAL + CC_TOTAL;
+  const tienen = marcadas.size;
+  let totalRepes = 0;
+  Object.values(repetidas).forEach(c => totalRepes += c);
+  return {
+    tienen, total, faltan: total - tienen,
+    pct: Math.round((tienen / total) * 100),
+    totalRepes,
+  };
+};
+
+const statsEquipo = (code) => {
+  let t = 0;
+  for (let i = 1; i <= FIGURITAS; i++) if (marcadas.has(`${code}${i}`)) t++;
+  return { tienen: t, total: FIGURITAS, faltan: FIGURITAS - t };
+};
+
+const repesEquipo = (code) => {
+  let total = 0;
+  const lista = [];
+  for (let i = 1; i <= FIGURITAS; i++) {
+    const c = repetidas[`${code}${i}`] || 0;
+    if (c > 0) {
+      total += c;
+      lista.push({ n: i, cant: c });
+    }
+  }
+  return { total, lista };
+};
+
+const faltantesEquipo = (code) => {
+  const f = [];
+  for (let i = 1; i <= FIGURITAS; i++) if (!marcadas.has(`${code}${i}`)) f.push(i);
+  return f;
+};
+
+// Calcula coincidencias con un amigo
+const calcularMatch = (amigoData) => {
+  // Yo tengo repe → amigo no tiene → "le doy"
+  // Yo no tengo → amigo tiene repe → "me da"
+  const leDoy = []; // {id, cant}
+  const meDa = [];  // {id}
+
+  ORDEN_FIGURITAS.forEach(id => {
+    const tengoRepe = (repetidas[id] || 0) > 0;
+    const amigoLaTiene = amigoData.tengo.has(id);
+    const amigoTieneRepe = (amigoData.repes[id] || 0) > 0;
+
+    if (tengoRepe && !amigoLaTiene) {
+      leDoy.push({ id, cant: repetidas[id] });
+    }
+    if (!marcadas.has(id) && amigoTieneRepe) {
+      meDa.push({ id, cant: amigoData.repes[id] });
+    }
+  });
+
+  return { leDoy, meDa };
+};
+
+// ====== ACCIONES ======
+
+const toggle = (id) => {
+  if (marcadas.has(id)) marcadas.delete(id);
+  else marcadas.add(id);
+  guardar();
+  render();
+};
+
+const sumarRepe = (id) => {
+  if (!marcadas.has(id)) marcadas.add(id);
+  repetidas[id] = (repetidas[id] || 0) + 1;
+  guardar();
+  render();
+};
+
+const restarRepe = (id) => {
+  if (!repetidas[id]) return;
+  repetidas[id]--;
+  if (repetidas[id] <= 0) delete repetidas[id];
+  guardar();
+  render();
+};
+
+const marcarEquipo = (code) => {
+  let todas = true;
+  for (let i = 1; i <= FIGURITAS; i++) if (!marcadas.has(`${code}${i}`)) { todas = false; break; }
+  for (let i = 1; i <= FIGURITAS; i++) {
+    if (todas) marcadas.delete(`${code}${i}`);
+    else marcadas.add(`${code}${i}`);
+  }
+  guardar();
+  render();
+};
+
+const resetTodo = () => {
+  if (confirm('¿Borrar todas las marcas y repetidas? (Los amigos guardados se mantienen)')) {
+    marcadas = new Set();
+    repetidas = {};
+    guardar();
+    render();
+  }
+};
+
+const cambiarTab = (t) => {
+  tabActiva = t;
+  guardar();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  render();
+};
+
+const guardarNombre = (nombre) => {
+  miNombre = (nombre || '').trim().slice(0, 30);
+  guardar();
+  render();
+};
+
+// ====== BACKUP / RESTORE ======
+
+// ====== BACKUP / RESTORE ======
+// El backup se guarda en formato .txt para que se pueda compartir por WhatsApp.
+// WhatsApp NO permite enviar .json desde el celular pero sí .txt.
+// El archivo arranca con un encabezado legible (resumen) y al final lleva
+// un bloque BACKUP-INICIO/BACKUP-FIN con los datos codificados en base64.
+
+const MARCA_INICIO = '===== BACKUP-INICIO =====';
+const MARCA_FIN = '===== BACKUP-FIN =====';
+
+const generarTextoBackup = () => {
+  const stats = calcStats();
+  const datos = {
+    version: 3,
+    fecha: new Date().toISOString(),
+    nombre: miNombre,
+    marcadas: [...marcadas],
+    repetidas: repetidas,
+    amigos: amigos,
+  };
+
+  // Codificamos en base64 para que el texto pegado no se rompa con caracteres especiales
+  const jsonStr = JSON.stringify(datos);
+  // btoa no maneja caracteres Unicode directamente; usamos encodeURIComponent + unescape
+  let payload;
+  try {
+    payload = btoa(unescape(encodeURIComponent(jsonStr)));
+  } catch (e) {
+    payload = btoa(jsonStr);
+  }
+
+  const fechaLegible = new Date().toLocaleString('es-AR');
+  const cantAmigos = Object.keys(amigos).length;
+
+  let txt = `📋 BACKUP - Mi Álbum Mundial 2026\n`;
+  txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  txt += `Nombre: ${miNombre || '(sin nombre)'}\n`;
+  txt += `Fecha del backup: ${fechaLegible}\n\n`;
+  txt += `Resumen:\n`;
+  txt += `• Figuritas pegadas: ${stats.tienen} de ${stats.total}\n`;
+  txt += `• Repetidas: ${stats.totalRepes}\n`;
+  txt += `• Amigos guardados: ${cantAmigos}\n`;
+  txt += `• Completo: ${stats.pct}%\n\n`;
+  txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  txt += `⚠️ NO BORRES NI MODIFIQUES EL CÓDIGO DE ABAJO\n`;
+  txt += `Es necesario para restaurar tu álbum.\n`;
+  txt += `Para restaurar: abrí la app, andá a Compartir → Restaurar y pegá todo este mensaje.\n`;
+  txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  txt += `${MARCA_INICIO}\n${payload}\n${MARCA_FIN}\n`;
+
+  return txt;
+};
+
+const parsearTextoBackup = (texto) => {
+  if (!texto || typeof texto !== 'string') return null;
+  const iStart = texto.indexOf(MARCA_INICIO);
+  const iEnd = texto.indexOf(MARCA_FIN);
+  if (iStart === -1 || iEnd === -1 || iEnd < iStart) return null;
+  const payload = texto.substring(iStart + MARCA_INICIO.length, iEnd).trim();
+  if (!payload) return null;
+  try {
+    let jsonStr;
+    try {
+      jsonStr = decodeURIComponent(escape(atob(payload)));
+    } catch (e) {
+      jsonStr = atob(payload);
+    }
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    return null;
+  }
+};
+
+const aplicarBackup = (datos) => {
+  if (!datos || typeof datos !== 'object') {
+    alert('❌ El backup no es válido.');
+    return false;
+  }
+  const tieneMarcadas = Array.isArray(datos.marcadas);
+  const tieneRepes = datos.repetidas && typeof datos.repetidas === 'object';
+  if (!tieneMarcadas && !tieneRepes) {
+    alert('❌ El backup no tiene datos válidos.');
+    return false;
+  }
+
+  const cuantasMarcadas = tieneMarcadas ? datos.marcadas.length : 0;
+  const cuantasRepes = tieneRepes ? Object.keys(datos.repetidas).length : 0;
+  const cuantosAmigos = datos.amigos ? Object.keys(datos.amigos).length : 0;
+
+  const msg = `¿Restaurar este backup?\n\n` +
+    `Nombre: ${datos.nombre || '(sin nombre)'}\n` +
+    `Figuritas: ${cuantasMarcadas}\n` +
+    `Repetidas: ${cuantasRepes}\n` +
+    `Amigos: ${cuantosAmigos}\n\n` +
+    `⚠️ Esto va a reemplazar todo lo que tenés cargado ahora.`;
+
+  if (!confirm(msg)) return false;
+
+  if (tieneMarcadas) marcadas = new Set(datos.marcadas);
+  if (tieneRepes) repetidas = datos.repetidas;
+  if (typeof datos.nombre === 'string') miNombre = datos.nombre;
+  if (datos.amigos && typeof datos.amigos === 'object') amigos = datos.amigos;
+
+  guardar();
+  render();
+  alert('✅ Backup restaurado con éxito');
+  return true;
+};
+
+const descargarBackup = () => {
+  const txt = generarTextoBackup();
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const fecha = new Date().toISOString().slice(0, 10);
+  const safeName = (miNombre || 'album').replace(/[^a-zA-Z0-9]/g, '_') || 'album';
+  a.href = url;
+  a.download = `Album-Mundial-2026_${safeName}_${fecha}.txt`;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+};
+
+// Compartir backup vía Web Share API (con archivo .txt) o WhatsApp (texto)
+const compartirBackupWpp = () => {
+  const txt = generarTextoBackup();
+
+  // El backup es muy largo. La mejor estrategia en iOS es:
+  // 1) Si Web Share API soporta files, usarla (se procesa internamente sin
+  //    bloqueo de popup porque es navigator.share nativo).
+  // 2) Si no, abrir WhatsApp DIRECTAMENTE con el texto (sincrónico).
+  try {
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const fecha = new Date().toISOString().slice(0, 10);
+    const safeName = (miNombre || 'album').replace(/[^a-zA-Z0-9]/g, '_') || 'album';
+    const fileName = `Album-Mundial-2026_${safeName}_${fecha}.txt`;
+    const file = new File([blob], fileName, { type: 'text/plain' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      // navigator.share es la única forma confiable de compartir archivos
+      // desde móvil. iOS Safari la soporta desde iOS 15.
+      navigator.share({
+        files: [file],
+        title: 'Backup Álbum Mundial 2026',
+        text: 'Backup de mi álbum del Mundial 2026.',
+      }).catch(() => {
+        // Si el usuario cancela o falla, mandamos el backup como texto
+        compartirWhatsApp(txt);
+      });
+      return;
+    }
+  } catch (err) {
+    // si falla, caemos al fallback
+  }
+
+  // Fallback: enviamos el backup completo como texto de WhatsApp
+  // (igual queda guardado en el chat, que es lo que importa)
+  compartirWhatsApp(txt);
+};
+
+const restaurarBackupDesdeArchivo = (file) => {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const contenido = e.target.result;
+    const datos = parsearTextoBackup(contenido);
+    if (datos) {
+      aplicarBackup(datos);
+      return;
+    }
+    // Compatibilidad: backups viejos en formato JSON puro
+    try {
+      const datosJson = JSON.parse(contenido);
+      aplicarBackup(datosJson);
+    } catch (err) {
+      alert('❌ No se pudo leer el archivo.\n\nAsegurate de que sea un backup generado por esta app (archivo .txt que arranca con "📋 BACKUP - Mi Álbum Mundial 2026").');
+    }
+  };
+  reader.onerror = () => alert('❌ Hubo un problema al leer el archivo.');
+  reader.readAsText(file);
+};
+
+const restaurarBackupDesdeTexto = (texto) => {
+  if (!texto || !texto.trim()) {
+    alert('Pegá el contenido del backup antes de restaurar.');
+    return;
+  }
+  const datos = parsearTextoBackup(texto);
+  if (datos) {
+    aplicarBackup(datos);
+    return;
+  }
+  // Por si pegaron solo el JSON
+  try {
+    const datosJson = JSON.parse(texto);
+    aplicarBackup(datosJson);
+  } catch (err) {
+    alert('❌ No reconocí ese contenido como un backup válido.\n\nAsegurate de copiar el mensaje completo, incluyendo las líneas BACKUP-INICIO y BACKUP-FIN.');
+  }
+};
+
+// ====== COMPARTIR LA APP ======
+
+const compartirApp = () => {
+  try {
+    const htmlActual = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const blob = new Blob([htmlActual], { type: 'text/html' });
+    const file = new File([blob], 'mi-album-mundial-2026.html', { type: 'text/html' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: 'Mi Álbum Mundial 2026',
+        text: '⚽ Te paso esta app para llevar el control del álbum del Mundial 2026. Abrila en tu celu y empezá a marcar tus figuritas.',
+      }).catch((err) => {
+        if (err && err.name !== 'AbortError') {
+          descargarApp();
+        }
+      });
+      return;
+    }
+  } catch (err) {
+    // sigue al fallback
+  }
+  descargarApp();
+};
+
+const descargarApp = () => {
+  const htmlActual = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const blob = new Blob([htmlActual], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mi-album-mundial-2026.html';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    if (a.parentNode) a.parentNode.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 1000);
+};
+
+const importarAmigo = (codigo) => {
+  const data = decodificarEstado(codigo);
+  if (!data) {
+    alert('El código no es válido. Pegalo completo, empieza con AM26|');
+    return;
+  }
+  // Si ya existe con ese nombre, lo sobreescribe (actualización)
+  amigos[data.nombre] = {
+    marcadas: [...data.tengo],
+    repetidas: data.repes,
+    fecha: Date.now(),
+  };
+  guardar();
+  render();
+};
+
+const borrarAmigo = (nombre) => {
+  if (confirm(`¿Borrar a ${nombre}?`)) {
+    delete amigos[nombre];
+    guardar();
+    render();
+  }
+};
+
+const compartirWhatsApp = (texto) => {
+  // Si estamos dentro de un WebView embebido (como el de WhatsApp en iPhone),
+  // no podemos abrir WhatsApp desde ahí. Copiamos al portapapeles y avisamos.
+  if (WEBVIEW_INFO.esWebView) {
+    let copiado = false;
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.contentEditable = 'true';
+      ta.readOnly = false;
+      const range = document.createRange();
+      range.selectNodeContents(ta);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      ta.setSelectionRange(0, 999999);
+      copiado = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+
+    if (copiado) {
+      alert('📋 El mensaje se copió al portapapeles.\n\nAbrí WhatsApp, elegí el contacto y pegá el mensaje (manteniendo apretado en el cuadro de texto).\n\n💡 Para que estos botones funcionen automáticamente, abrí la app en Safari (los tres puntos arriba → "Abrir en Safari").');
+    } else {
+      window.prompt('Tocá y mantené apretado el texto para copiarlo, después pegalo en WhatsApp:', texto);
+    }
+    return;
+  }
+
+  // Navegador normal: crear un <a> y clickearlo sincrónicamente
+  const textoEncoded = encodeURIComponent(texto);
+  const url = `https://wa.me/?text=${textoEncoded}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    if (a.parentNode) a.parentNode.removeChild(a);
+  }, 100);
+};
+
+const copiarTexto = async (texto) => {
+  // Safari/iOS requiere que esto se ejecute en un handler de evento síncrono.
+  // Probamos navigator.clipboard primero (requiere https o file://),
+  // y caemos a execCommand si falla.
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(texto);
+      return true;
+    }
+  } catch (e) {
+    // sigue al fallback
+  }
+  // Fallback con textarea
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    ta.style.pointerEvents = 'none';
+    document.body.appendChild(ta);
+    // iOS necesita selección explícita
+    ta.contentEditable = 'true';
+    ta.readOnly = false;
+    const range = document.createRange();
+    range.selectNodeContents(ta);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    ta.setSelectionRange(0, 999999);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e2) {
+    return false;
+  }
+};
+
+const compartirCodigo = () => {
+  const codigo = codificarEstado(miNombre || 'amigo', marcadas, repetidas);
+  const nombre = miNombre || 'tu amigo';
+  const txt = `⚽ ¡Hola! Te paso mi álbum del Mundial 2026 (de ${nombre}). Copialo y pegalo en la pestaña "Compartir" de tu app para ver qué podemos cambiar:\n\n${codigo}`;
+  // Llamamos a compartirWhatsApp SINCRÓNICAMENTE: Safari iOS exige que
+  // la apertura suceda dentro del mismo tick del click, sin async previo.
+  compartirWhatsApp(txt);
+  // Intentamos copiar al portapapeles en paralelo, sin bloquear.
+  try { copiarTexto(txt); } catch (e) {}
+};
+
+const compartirSoloCodigo = () => {
+  const codigo = codificarEstado(miNombre || 'amigo', marcadas, repetidas);
+  // Intentamos copiar de forma síncrona usando execCommand (compatible Safari iOS)
+  let copiado = false;
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = codigo;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.contentEditable = 'true';
+    ta.readOnly = false;
+    const range = document.createRange();
+    range.selectNodeContents(ta);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    ta.setSelectionRange(0, 999999);
+    copiado = document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (e) {}
+
+  // En paralelo, intentamos la API moderna
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(codigo).catch(() => {});
+  }
+
+  if (copiado) {
+    setTimeout(() => {
+      alert('✅ Código copiado.\n\nPegalo en la app de tu amigo (pestaña Compartir → "Pegá el código de un amigo").');
+    }, 50);
+  } else {
+    window.prompt('Tocá y mantené apretado el código para copiarlo:', codigo);
+  }
+};
+
+const compartirMatchPorWpp = (nombreAmigo, match) => {
+  const labelTxt = (id) => id;
+  let txt = `⚽ Coincidencias con ${nombreAmigo} — Álbum Mundial 2026\n\n`;
+
+  if (match.leDoy.length > 0) {
+    txt += `🎁 Te puedo dar (yo las tengo repetidas, vos no las tenés):\n`;
+    match.leDoy.forEach(({id, cant}) => {
+      txt += `• ${id}${cant > 1 ? ` (tengo ${cant})` : ''}\n`;
+    });
+  } else {
+    txt += `(no tengo repes que te sirvan ahora)\n`;
+  }
+
+  txt += `\n`;
+
+  if (match.meDa.length > 0) {
+    txt += `🙏 ¿Me das? (vos tenés repetidas, yo no las tengo):\n`;
+    match.meDa.forEach(({id, cant}) => {
+      txt += `• ${id}${cant > 1 ? ` (tenés ${cant})` : ''}\n`;
+    });
+  } else {
+    txt += `(no encontré repes tuyas que me sirvan)\n`;
+  }
+
+  txt += `\n¿Hacemos el cambio? 🤝`;
+  compartirWhatsApp(txt);
+};
+
+const compartirParaPadres = (paraQuien) => {
+  const total = 48 * FIGURITAS + FWC_TOTAL + CC_TOTAL;
+  const tienen = marcadas.size;
+  const faltan = total - tienen;
+  const pct = Math.round((tienen / total) * 100);
+
+  let saludo, despedida;
+  if (paraQuien === 'mama') {
+    saludo = 'Hola ma 💛';
+    despedida = '¡Gracias ma! 🙏';
+  } else if (paraQuien === 'papa') {
+    saludo = 'Hola pa 💙';
+    despedida = '¡Gracias pa! 🙏';
+  } else {
+    saludo = '¡Hola familia! 👋';
+    despedida = '¡Gracias! 🙏';
+  }
+
+  const firma = miNombre ? `\n\n— ${miNombre}` : '';
+
+  let txt = `${saludo}\n\n`;
+  txt += `Te paso la lista actualizada de las figuritas que me faltan del álbum del Mundial 2026, para que la tengas a mano si vas al kiosco.\n\n`;
+  txt += `Cómo voy:\n`;
+  txt += `Tengo ${tienen} de ${total} (${pct}%). Me faltan ${faltan}.\n\n`;
+
+  if (faltan === 0) {
+    txt += `🎉 ¡Ya completé el álbum! No me falta ninguna 🏆${firma}`;
+    compartirWhatsApp(txt);
+    return;
+  }
+
+  txt += `Estas son las que me faltan, por equipo:\n`;
+  txt += `(cada equipo tiene 20 figuritas numeradas del 1 al 20)\n\n`;
+
+  for (const [letra, equipos] of Object.entries(GRUPOS)) {
+    let bloqueGrupo = '';
+    let hayEnGrupo = false;
+    equipos.forEach(eq => {
+      const f = faltantesEquipo(eq.code);
+      if (f.length > 0) {
+        hayEnGrupo = true;
+        const estado = f.length === FIGURITAS
+          ? `me faltan todas (1 a 20)`
+          : `${f.join(', ')}`;
+        bloqueGrupo += `• ${eq.nombre}: ${estado}\n`;
+      }
+    });
+    if (hayEnGrupo) {
+      txt += `▸ Grupo ${letra}\n${bloqueGrupo}\n`;
+    }
+  }
+
+  const fwcF = [];
+  for (let i = 1; i <= FWC_TOTAL; i++) if (!marcadas.has(`FWC${i}`)) fwcF.push(i);
+  if (fwcF.length > 0) {
+    txt += `▸ Especiales del álbum (estadios, trofeo, mascota, pelota)\n`;
+    txt += `• Códigos FWC: ${fwcF.join(', ')}\n\n`;
+  }
+
+  const ccF = [];
+  for (let i = 1; i <= CC_TOTAL; i++) if (!marcadas.has(`CC${i}`)) ccF.push(i);
+  if (ccF.length > 0) {
+    txt += `▸ Especiales Coca-Cola (no vienen en sobres, se canjean en los puntos oficiales con 2 tapitas plateadas + $1000)\n`;
+    txt += `• Códigos CC: ${ccF.join(', ')}\n\n`;
+  }
+
+  txt += despedida + firma;
+  compartirWhatsApp(txt);
+};
+
+const compartirFaltantes = () => {
+  let txt = `⚽ ¡Hola! Estas son las figuritas del Álbum Mundial 2026 que me FALTAN:\n\n`;
+  let hay = false;
+  todosLosEquipos.forEach(eq => {
+    const f = faltantesEquipo(eq.code);
+    if (f.length > 0) { hay = true; txt += `${eq.nombre} (${eq.code}): ${f.join(', ')}\n`; }
+  });
+  const fwcF = [];
+  for (let i = 1; i <= FWC_TOTAL; i++) if (!marcadas.has(`FWC${i}`)) fwcF.push(i);
+  if (fwcF.length) { hay = true; txt += `\nFWC: ${fwcF.join(', ')}\n`; }
+  const ccF = [];
+  for (let i = 1; i <= CC_TOTAL; i++) if (!marcadas.has(`CC${i}`)) ccF.push(i);
+  if (ccF.length) { hay = true; txt += `CC: ${ccF.join(', ')}\n`; }
+  if (!hay) { alert('¡No te falta ninguna! 🎉'); return; }
+  txt += `\n¿Tenés alguna repetida? 🙏`;
+  compartirWhatsApp(txt);
+};
+
+const compartirRepetidas = () => {
+  let txt = `⚽ ¡Hola! Tengo estas figuritas REPETIDAS del Álbum Mundial 2026 para cambiar:\n\n`;
+  let hay = false;
+  todosLosEquipos.forEach(eq => {
+    const r = repesEquipo(eq.code);
+    if (r.lista.length > 0) {
+      hay = true;
+      const items = r.lista.map(x => x.cant > 1 ? `${x.n} (x${x.cant})` : `${x.n}`).join(', ');
+      txt += `${eq.nombre} (${eq.code}): ${items}\n`;
+    }
+  });
+  const fwcR = [];
+  for (let i = 1; i <= FWC_TOTAL; i++) {
+    const c = repetidas[`FWC${i}`] || 0;
+    if (c > 0) fwcR.push(c > 1 ? `${i} (x${c})` : `${i}`);
+  }
+  if (fwcR.length) { hay = true; txt += `\nFWC: ${fwcR.join(', ')}\n`; }
+  const ccR = [];
+  for (let i = 1; i <= CC_TOTAL; i++) {
+    const c = repetidas[`CC${i}`] || 0;
+    if (c > 0) ccR.push(c > 1 ? `${i} (x${c})` : `${i}`);
+  }
+  if (ccR.length) { hay = true; txt += `CC: ${ccR.join(', ')}\n`; }
+  if (!hay) { alert('Todavía no cargaste ninguna repetida.'); return; }
+  txt += `\n¿Te sirve alguna? 🤝`;
+  compartirWhatsApp(txt);
+};
+
+// ====== RENDER ======
+
+const escapeAttr = (s) => String(s).replace(/"/g, '&quot;').replace(/'/g, "&#39;");
+const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+const renderCasillaTengo = (id, n, esp) => {
+  const tiene = marcadas.has(id);
+  const cls = tiene
+    ? 'bg-blue-600 text-white shadow-sm'
+    : 'bg-gray-100 text-gray-500 active:bg-gray-200';
+  return `<button data-id="${escapeAttr(id)}" data-action="toggle" class="aspect-square rounded-lg text-[10px] font-semibold transition-all ${cls}">
+    <div class="flex flex-col items-center justify-center h-full leading-none">
+      <span class="text-[10px] font-bold">${n}</span>
+      ${esp ? `<span class="text-[8px] mt-0.5 ${tiene ? 'opacity-90' : 'opacity-70'}">${esp}</span>` : ''}
+    </div>
+  </button>`;
+};
+
+const renderCasillaRepe = (id, n, esp) => {
+  const cant = repetidas[id] || 0;
+  const tiene = marcadas.has(id);
+  let bg, text;
+  if (cant > 0) { bg = 'bg-amber-500 text-white shadow-sm'; text = `+${cant}`; }
+  else if (tiene) { bg = 'bg-blue-50 text-blue-600 border border-blue-200'; text = ''; }
+  else { bg = 'bg-gray-100 text-gray-400'; text = ''; }
+
+  return `<div class="aspect-square rounded-lg ${bg} relative flex flex-col items-center justify-center">
+    <div class="text-[10px] font-bold leading-none">${n}</div>
+    ${esp ? `<div class="text-[8px] mt-0.5 ${cant > 0 || tiene ? '' : 'opacity-60'}">${esp}</div>` : ''}
+    ${text ? `<div class="text-[8px] mt-0.5 font-bold">${text}</div>` : ''}
+    <div class="absolute inset-x-0 -bottom-1 flex justify-center gap-1">
+      <button data-id="${escapeAttr(id)}" data-action="restar-repe" class="w-5 h-5 rounded-full bg-white border border-gray-300 text-gray-700 text-[11px] font-bold leading-none active:bg-gray-100 shadow-sm">−</button>
+      <button data-id="${escapeAttr(id)}" data-action="sumar-repe" class="w-5 h-5 rounded-full bg-white border border-gray-300 text-gray-700 text-[11px] font-bold leading-none active:bg-gray-100 shadow-sm">+</button>
+    </div>
+  </div>`;
+};
+
+const renderEquipoTengo = (eq) => {
+  const s = statsEquipo(eq.code);
+  const completo = s.tienen === s.total;
+  let casillas = '';
+  for (let n = 1; n <= FIGURITAS; n++) {
+    const id = `${eq.code}${n}`;
+    const esp = n === 1 ? 'ESC' : n === 2 ? 'FG' : null;
+    casillas += renderCasillaTengo(id, n, esp);
+  }
+  return `<div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+    <div class="h-1.5" style="background-color: ${eq.color}"></div>
+    <div class="px-4 pt-3 pb-2 flex items-center justify-between">
+      <div>
+        <div class="font-bold text-gray-900 text-base leading-tight">${eq.nombre}</div>
+        <div class="text-[9px] tracking-[0.1em] text-gray-400 uppercase font-semibold mt-0.5">${eq.conf} · ${eq.code}</div>
+      </div>
+      <div class="text-right">
+        <div class="text-sm font-bold tabular-nums ${completo ? 'text-green-600' : 'text-gray-900'}">${s.tienen}<span class="text-gray-300">/${s.total}</span></div>
+        ${s.faltan > 0 ? `<div class="text-[10px] text-red-500 font-medium">faltan ${s.faltan}</div>` : `<div class="text-[10px] text-green-600 font-medium">¡completo!</div>`}
+      </div>
+    </div>
+    <div class="px-4 pb-3">
+      <div class="grid grid-cols-5 gap-1.5">${casillas}</div>
+      <button data-action="marcar-equipo" data-code="${eq.code}" class="mt-3 w-full text-[11px] text-blue-600 active:text-blue-800 font-semibold py-1">
+        ${completo ? 'Desmarcar todas' : 'Marcar todas'}
+      </button>
+    </div>
+  </div>`;
+};
+
+const renderEquipoRepe = (eq) => {
+  const r = repesEquipo(eq.code);
+  let casillas = '';
+  for (let n = 1; n <= FIGURITAS; n++) {
+    const id = `${eq.code}${n}`;
+    const esp = n === 1 ? 'ESC' : n === 2 ? 'FG' : null;
+    casillas += renderCasillaRepe(id, n, esp);
+  }
+  return `<div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+    <div class="h-1.5" style="background-color: ${eq.color}"></div>
+    <div class="px-4 pt-3 pb-2 flex items-center justify-between">
+      <div>
+        <div class="font-bold text-gray-900 text-base leading-tight">${eq.nombre}</div>
+        <div class="text-[9px] tracking-[0.1em] text-gray-400 uppercase font-semibold mt-0.5">${eq.conf} · ${eq.code}</div>
+      </div>
+      <div class="text-right">
+        <div class="text-sm font-bold tabular-nums ${r.total > 0 ? 'text-amber-600' : 'text-gray-400'}">${r.total}</div>
+        <div class="text-[10px] ${r.total > 0 ? 'text-amber-600' : 'text-gray-400'} font-medium">repes</div>
+      </div>
+    </div>
+    <div class="px-4 pb-5">
+      <div class="grid grid-cols-5 gap-x-1.5 gap-y-3">${casillas}</div>
+    </div>
+  </div>`;
+};
+
+const renderSeccionExtra = (codigo, total, titulo, etiqueta, color, descripcion, modo) => {
+  let casillas = '';
+  const cols = total > 14 ? 'grid-cols-5 sm:grid-cols-10' : 'grid-cols-5 sm:grid-cols-7';
+  const gap = modo === 'repe' ? 'gap-x-1.5 gap-y-3' : 'gap-1.5';
+  for (let n = 1; n <= total; n++) {
+    const id = `${codigo}${n}`;
+    if (modo === 'repe') {
+      casillas += renderCasillaRepe(id, n, null);
+    } else {
+      const tiene = marcadas.has(id);
+      const cls = tiene ? `${color} text-white shadow-sm` : 'bg-gray-100 text-gray-500 active:bg-gray-200';
+      casillas += `<button data-id="${id}" data-action="toggle" class="aspect-square rounded-lg text-[10px] font-bold transition-all ${cls}">${n}</button>`;
+    }
+  }
+  const colorTexto = color === 'bg-blue-600' ? 'text-blue-600' : 'text-red-600';
+  return `<div class="mb-8">
+    <div class="text-[10px] font-bold tracking-[0.15em] ${colorTexto} uppercase mb-1">${etiqueta}</div>
+    <h2 class="text-3xl font-bold tracking-tight text-gray-900 mb-1">${titulo}</h2>
+    <p class="text-sm text-gray-500 mb-4">${descripcion}</p>
+    <div class="bg-white border border-gray-200 rounded-2xl ${modo === 'repe' ? 'px-4 pt-4 pb-6' : 'p-4'}">
+      <div class="grid ${cols} ${gap}">${casillas}</div>
+    </div>
+  </div>`;
+};
+
+const renderTabTengo = () => {
+  let grupos = '';
+  for (const [letra, equipos] of Object.entries(GRUPOS)) {
+    let eqHtml = '';
+    equipos.forEach(eq => eqHtml += renderEquipoTengo(eq));
+    grupos += `<div class="mb-8">
+      <h2 class="text-3xl font-bold tracking-tight text-gray-900 mb-3">Grupo ${letra}</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${eqHtml}</div>
+    </div>`;
+  }
+  return `
+    <div class="text-[10px] font-bold tracking-[0.15em] text-blue-600 uppercase mb-1">12 grupos · 48 equipos</div>
+    <p class="text-sm text-gray-500 mb-6">Tocá cada casilla para marcar la figurita que tenés. Se guarda solo.</p>
+    ${grupos}
+    ${renderSeccionExtra('FWC', FWC_TOTAL, 'FWC', 'Especiales del álbum', 'bg-blue-600', '19 figuritas: estadios, trofeo, mascota, pelota, etc.', 'tengo')}
+    ${renderSeccionExtra('CC', CC_TOTAL, 'CC', 'Edición Argentina · Coca-Cola', 'bg-red-600', '14 figuritas que se canjean con tapitas.', 'tengo')}
+  `;
+};
+
+const renderTabRepes = () => {
+  let grupos = '';
+  for (const [letra, equipos] of Object.entries(GRUPOS)) {
+    let eqHtml = '';
+    equipos.forEach(eq => eqHtml += renderEquipoRepe(eq));
+    grupos += `<div class="mb-8">
+      <h2 class="text-3xl font-bold tracking-tight text-gray-900 mb-3">Grupo ${letra}</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${eqHtml}</div>
+    </div>`;
+  }
+  return `
+    <div class="text-[10px] font-bold tracking-[0.15em] text-amber-600 uppercase mb-1">Para intercambiar</div>
+    <p class="text-sm text-gray-500 mb-2">Tocá <strong>+</strong> cada vez que te salga una repetida en un sobre. <strong>−</strong> para descontar.</p>
+    <p class="text-xs text-gray-400 mb-6">Si todavía no la tenés pegada, igual la podés cargar como repetida.</p>
+    ${grupos}
+    ${renderSeccionExtra('FWC', FWC_TOTAL, 'FWC', 'Especiales del álbum', 'bg-blue-600', '19 figuritas: estadios, trofeo, mascota, pelota, etc.', 'repe')}
+    ${renderSeccionExtra('CC', CC_TOTAL, 'CC', 'Edición Argentina · Coca-Cola', 'bg-red-600', '14 figuritas que se canjean con tapitas.', 'repe')}
+  `;
+};
+
+const wppIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 inline-block mr-2" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>`;
+
+const renderTabAmigos = () => {
+  const stats = calcStats();
+  const codigoMio = codificarEstado(miNombre || 'amigo', marcadas, repetidas);
+
+  // Tarjetas de amigos guardados con su match
+  let amigosHtml = '';
+  const nombresOrdenados = Object.keys(amigos).sort();
+  if (nombresOrdenados.length === 0) {
+    amigosHtml = `<div class="bg-gray-50 rounded-2xl p-6 text-center">
+      <div class="text-gray-400 text-sm">Todavía no agregaste amigos.</div>
+      <div class="text-gray-400 text-xs mt-1">Pediles que te manden su código y pegalo abajo ⬇</div>
+    </div>`;
+  } else {
+    nombresOrdenados.forEach(nombre => {
+      const a = amigos[nombre];
+      const amigoData = {
+        tengo: new Set(a.marcadas),
+        repes: a.repetidas || {},
+      };
+      const match = calcularMatch(amigoData);
+      const totalLeDoy = match.leDoy.reduce((s, x) => s + x.cant, 0);
+      const totalLeDoyUnicas = match.leDoy.length;
+      const totalMeDa = match.meDa.length;
+
+      // Renderizar listas agrupadas por equipo
+      const agrupar = (items) => {
+        const porEq = {};
+        items.forEach(({id, cant}) => {
+          // separar prefijo y número
+          const m = id.match(/^([A-Z]+)(\d+)$/);
+          if (!m) return;
+          const [_, code, nStr] = m;
+          if (!porEq[code]) porEq[code] = [];
+          porEq[code].push({ n: parseInt(nStr, 10), cant });
+        });
+        return porEq;
+      };
+
+      const eqInfo = (code) => {
+        const eq = todosLosEquipos.find(e => e.code === code);
+        if (eq) return { nombre: eq.nombre, color: eq.color };
+        if (code === 'FWC') return { nombre: 'Especiales FWC', color: '#0066CC' };
+        if (code === 'CC') return { nombre: 'Coca-Cola', color: '#C8102E' };
+        return { nombre: code, color: '#888' };
+      };
+
+      const renderLista = (items, vacio) => {
+        if (items.length === 0) return `<div class="text-xs text-gray-400 italic py-2">${vacio}</div>`;
+        const porEq = agrupar(items);
+        let html = '';
+        Object.entries(porEq).forEach(([code, nums]) => {
+          const info = eqInfo(code);
+          const txt = nums.map(x => x.cant > 1 ? `${x.n}(x${x.cant})` : `${x.n}`).join(', ');
+          html += `<div class="flex gap-2 text-xs py-1">
+            <span class="inline-block w-2 h-2 rounded-full mt-1 shrink-0" style="background-color: ${info.color}"></span>
+            <span class="font-semibold text-gray-900 w-28 shrink-0 truncate">${escapeHtml(info.nombre)}</span>
+            <span class="text-gray-600">${txt}</span>
+          </div>`;
+        });
+        return html;
+      };
+
+      const fechaTxt = a.fecha ? new Date(a.fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+
+      amigosHtml += `<div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-3">
+        <div class="px-4 pt-3 pb-2 flex items-start justify-between border-b border-gray-100">
+          <div>
+            <div class="font-bold text-gray-900 text-lg leading-tight">${escapeHtml(nombre)}</div>
+            ${fechaTxt ? `<div class="text-[10px] text-gray-400 mt-0.5">Actualizado ${fechaTxt}</div>` : ''}
+          </div>
+          <button data-action="borrar-amigo" data-nombre="${escapeAttr(nombre)}" class="text-xs text-gray-400 active:text-red-500">Borrar</button>
+        </div>
+
+        <div class="grid grid-cols-2 divide-x divide-gray-100">
+          <div class="px-4 py-3">
+            <div class="flex items-baseline justify-between mb-2">
+              <div class="text-[10px] font-bold tracking-wider text-green-700 uppercase">Le doy</div>
+              <div class="text-lg font-bold text-green-700 tabular-nums">${totalLeDoyUnicas}</div>
+            </div>
+            <div class="max-h-48 overflow-y-auto -mx-1 px-1">${renderLista(match.leDoy, 'Nada por ahora')}</div>
+          </div>
+          <div class="px-4 py-3">
+            <div class="flex items-baseline justify-between mb-2">
+              <div class="text-[10px] font-bold tracking-wider text-blue-700 uppercase">Me da</div>
+              <div class="text-lg font-bold text-blue-700 tabular-nums">${totalMeDa}</div>
+            </div>
+            <div class="max-h-48 overflow-y-auto -mx-1 px-1">${renderLista(match.meDa, 'Nada por ahora')}</div>
+          </div>
+        </div>
+
+        ${(totalLeDoyUnicas + totalMeDa) > 0 ? `
+        <div class="px-4 py-3 border-t border-gray-100 bg-gray-50">
+          <button data-action="match-wpp" data-nombre="${escapeAttr(nombre)}" class="w-full bg-green-600 active:bg-green-700 text-white font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center">
+            ${wppIcon}
+            Mandarle propuesta por WhatsApp
+          </button>
+        </div>` : ''}
+      </div>`;
+    });
+  }
+
+  return `
+    <div class="text-[10px] font-bold tracking-[0.15em] text-green-600 uppercase mb-1">Compartir e intercambiar</div>
+    <h2 class="text-3xl font-bold tracking-tight text-gray-900 mb-1">Compartir</h2>
+    <p class="text-sm text-gray-500 mb-6">Mandale tu álbum a tu familia y a tus amigos. Si ellos también usan la app, se sincronizan los códigos y la app te muestra qué pueden cambiar.</p>
+
+    <!-- ===== PARA PAPÁ Y MAMÁ ===== -->
+    <div class="bg-gradient-to-br from-pink-50 to-rose-50 border-2 border-pink-200 rounded-2xl p-5 mb-6">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-2xl">❤️</span>
+        <div class="text-[10px] font-bold tracking-[0.15em] text-pink-700 uppercase">Pedir ayuda a la familia</div>
+      </div>
+      <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-2">Mandale tu lista a tu familia</h3>
+      <p class="text-sm text-gray-600 mb-4 leading-relaxed">Si tu mamá o tu papá te están ayudando a completar el álbum, mandales por WhatsApp la lista actualizada de las que te faltan. Va con los nombres completos de los equipos para que la entiendan fácil cuando estén comprando sobres.</p>
+
+      <div class="grid grid-cols-2 gap-3 mb-3">
+        <button data-action="compartir-mama" class="bg-pink-500 active:bg-pink-600 text-white font-semibold py-4 rounded-2xl text-base flex items-center justify-center shadow-sm">
+          ${wppIcon}
+          Para mamá
+        </button>
+        <button data-action="compartir-papa" class="bg-blue-500 active:bg-blue-600 text-white font-semibold py-4 rounded-2xl text-base flex items-center justify-center shadow-sm">
+          ${wppIcon}
+          Para papá
+        </button>
+      </div>
+
+      <button data-action="compartir-familia" class="w-full bg-white border-2 border-pink-300 active:bg-pink-50 text-pink-700 font-semibold py-3 rounded-2xl text-sm flex items-center justify-center">
+        ${wppIcon}
+        Para el grupo familiar
+      </button>
+    </div>
+
+    <!-- Mi nombre -->
+    <div class="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+      <label class="text-[10px] font-bold tracking-wider text-gray-500 uppercase block mb-2">Tu nombre (así te ven tus amigos)</label>
+      <input type="text" id="input-nombre" value="${escapeAttr(miNombre)}" placeholder="Ej: Juani"
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-blue-500" maxlength="30">
+    </div>
+
+    <!-- Compartir mi código -->
+    <div class="bg-blue-50 rounded-2xl p-5 mb-4">
+      <div class="text-[10px] font-bold tracking-[0.15em] text-blue-700 uppercase mb-1">Paso 1 · Tu código</div>
+      <h3 class="text-xl font-bold tracking-tight text-gray-900 mb-2">Mandale tu álbum a un amigo</h3>
+      <p class="text-sm text-gray-600 mb-3">Compartí tu código con tus amigos para que vean qué tenés y qué te falta.</p>
+
+      <div class="bg-white border border-blue-200 rounded-xl p-3 mb-3">
+        <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Tu código</div>
+        <div class="text-[10px] text-gray-700 break-all leading-relaxed max-h-20 overflow-y-auto font-mono">${escapeHtml(codigoMio)}</div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button data-action="compartir-codigo-wpp" class="bg-green-600 active:bg-green-700 text-white font-semibold py-3 rounded-xl text-sm flex items-center justify-center">
+          ${wppIcon}
+          Por WhatsApp
+        </button>
+        <button data-action="copiar-codigo" class="bg-white border-2 border-blue-300 active:bg-blue-50 text-blue-700 font-semibold py-3 rounded-xl text-sm">
+          Copiar código
+        </button>
+      </div>
+    </div>
+
+    <!-- Importar amigo -->
+    <div class="bg-amber-50 rounded-2xl p-5 mb-6">
+      <div class="text-[10px] font-bold tracking-[0.15em] text-amber-700 uppercase mb-1">Paso 2 · Pegá el código de un amigo</div>
+      <h3 class="text-xl font-bold tracking-tight text-gray-900 mb-2">Agregá amigos</h3>
+      <p class="text-sm text-gray-600 mb-3">Pedile a tu amigo que copie su código y te lo mande. Pegalo acá abajo:</p>
+
+      <textarea id="input-codigo-amigo" placeholder="Pegá acá el código que te mandó tu amigo (empieza con AM26|...)" rows="3"
+        class="w-full px-3 py-2 border border-amber-300 rounded-lg text-xs leading-relaxed focus:outline-none focus:border-amber-500 mb-3 resize-none"></textarea>
+
+      <button data-action="importar-amigo" class="w-full bg-amber-500 active:bg-amber-600 text-white font-semibold py-3 rounded-xl text-sm">
+        Agregar amigo
+      </button>
+    </div>
+
+    <!-- Lista de amigos con match -->
+    <div class="text-[10px] font-bold tracking-[0.15em] text-gray-500 uppercase mb-1">Tus amigos · ${nombresOrdenados.length}</div>
+    <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-1">Coincidencias</h3>
+    <p class="text-sm text-gray-500 mb-4">Las figuritas que pueden cambiar entre vos y cada amigo.</p>
+
+    ${amigosHtml}
+
+    <!-- ===== COMPARTIR LA APP ===== -->
+    <div class="mt-12 mb-6">
+      <div class="text-[10px] font-bold tracking-[0.15em] text-purple-600 uppercase mb-1">Pasale la app a tus amigos</div>
+      <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-1">Compartir la app</h3>
+      <p class="text-sm text-gray-500 mb-4">Mandale el archivo a tus amigos para que también puedan llevar el control de sus figuritas. Ellos empiezan con el álbum vacío.</p>
+
+      <div class="bg-purple-50 rounded-2xl p-5">
+        <div class="space-y-3">
+          <button data-action="compartir-app" class="w-full bg-purple-600 active:bg-purple-700 text-white font-semibold py-4 rounded-2xl text-base flex items-center justify-center shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+            Compartir la app
+          </button>
+          <button data-action="descargar-app" class="w-full bg-white border-2 border-purple-300 active:bg-purple-100 text-purple-700 font-semibold py-3 rounded-2xl text-sm flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Solo descargar archivo
+          </button>
+        </div>
+        <p class="text-xs text-gray-500 mt-3 leading-relaxed">
+          El archivo no incluye tus datos: tu amigo arranca con el álbum vacío y carga el suyo. Después, en la pestaña Compartir, pueden intercambiarse los códigos.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== BACKUP / RESTORE ===== -->
+    <div class="mb-6">
+      <div class="text-[10px] font-bold tracking-[0.15em] text-emerald-600 uppercase mb-1">Cuidá tus datos</div>
+      <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-1">Copia de seguridad</h3>
+      <p class="text-sm text-gray-500 mb-4">Mandate tu backup a vos mismo por WhatsApp y queda guardado para siempre en tu historial. Si cambiás de celular o borrás el navegador, lo recuperás desde ahí.</p>
+
+      <div class="bg-emerald-50 rounded-2xl p-5">
+        <div class="bg-white rounded-xl p-3 mb-4 flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <div class="text-xs text-gray-600 leading-relaxed">
+            Tus datos viven solo en este navegador. Si lo borrás o cambiás de teléfono, se pierden. <strong class="text-gray-900">Hacete un backup cada tanto.</strong>
+          </div>
+        </div>
+
+        <!-- GUARDAR -->
+        <div class="mb-1 text-[10px] font-bold tracking-wider text-emerald-700 uppercase">Guardar</div>
+        <div class="space-y-2 mb-5">
+          <button data-action="compartir-backup-wpp" class="w-full bg-emerald-600 active:bg-emerald-700 text-white font-semibold py-4 rounded-2xl text-base flex items-center justify-center shadow-sm">
+            ${wppIcon}
+            Mandármelo por WhatsApp
+          </button>
+          <button data-action="descargar-backup" class="w-full bg-white border-2 border-emerald-300 active:bg-emerald-100 text-emerald-700 font-semibold py-3 rounded-2xl text-sm flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Descargar archivo (.txt)
+          </button>
+        </div>
+
+        <!-- RESTAURAR -->
+        <div class="mb-1 text-[10px] font-bold tracking-wider text-emerald-700 uppercase">Restaurar</div>
+        <div class="space-y-2">
+          <label class="w-full bg-white border-2 border-emerald-300 active:bg-emerald-100 text-emerald-700 font-semibold py-3 rounded-2xl text-sm flex items-center justify-center cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-8-12v12m0-12l-4 4m4-4l4 4"/>
+            </svg>
+            Restaurar desde archivo
+            <input type="file" id="input-restore" accept=".txt,.json,text/plain,application/json" class="hidden">
+          </label>
+
+          <button data-action="abrir-restaurar-texto" class="w-full bg-white border-2 border-emerald-300 active:bg-emerald-100 text-emerald-700 font-semibold py-3 rounded-2xl text-sm flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+            </svg>
+            Pegar el backup (texto)
+          </button>
+
+          <div id="bloque-restaurar-texto" class="hidden bg-white border border-emerald-200 rounded-xl p-3 mt-2">
+            <label class="text-[10px] font-bold tracking-wider text-gray-500 uppercase block mb-2">Pegá acá el mensaje completo que te enviaste</label>
+            <textarea id="input-restore-texto" rows="5" placeholder="Pegá todo el mensaje de WhatsApp (incluyendo las líneas BACKUP-INICIO y BACKUP-FIN)..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-[11px] leading-relaxed focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+            <div class="flex gap-2 mt-2">
+              <button data-action="restaurar-desde-texto" class="flex-1 bg-emerald-600 active:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl text-sm">Restaurar</button>
+              <button data-action="cancelar-restaurar-texto" class="px-4 bg-gray-100 active:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl text-sm">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-4 leading-relaxed">
+          El backup incluye tu nombre, las figuritas marcadas, las repetidas y los amigos guardados. <strong>Mandándotelo por WhatsApp a vos mismo</strong> queda guardado para siempre y no lo perdés aunque cambies de teléfono.
+        </p>
+      </div>
+    </div>
+  `;
+};
+
+function render() {
+  const stats = calcStats();
+
+  let contenido = '';
+  if (tabActiva === 'tengo') contenido = renderTabTengo();
+  else if (tabActiva === 'repes') contenido = renderTabRepes();
+  else if (tabActiva === 'amigos') contenido = renderTabAmigos();
+
+  const cantAmigos = Object.keys(amigos).length;
+
+  const tabBtn = (id, label, badge) => {
+    const activa = tabActiva === id;
+    return `<button data-action="tab" data-tab="${id}" class="flex-1 px-2 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
+      activa ? 'bg-gray-900 text-white shadow-sm' : 'bg-transparent text-gray-600 active:bg-gray-100'
+    }">
+      ${label}
+      ${badge !== null && badge !== undefined ? `<span class="ml-1 inline-block text-[10px] font-bold tabular-nums ${activa ? 'text-white/80' : 'text-gray-400'}">${badge}</span>` : ''}
+    </button>`;
+  };
+
+  // Banner de aviso si estamos dentro de WhatsApp/Instagram WebView
+  const bannerWebView = WEBVIEW_INFO.esWebView ? `
+    <div class="bg-amber-100 border-b-2 border-amber-400 px-4 py-3">
+      <div class="max-w-3xl mx-auto flex items-start gap-2">
+        <span class="text-xl shrink-0">⚠️</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-bold text-amber-900 leading-tight mb-1">Abrí la app en Safari</div>
+          <div class="text-xs text-amber-900 leading-snug mb-2">Estás viendo la app dentro de WhatsApp. Para que los botones de compartir funcionen bien, abrila en Safari:</div>
+          <div class="text-xs text-amber-900 leading-snug">
+            <strong>1.</strong> Tocá los <strong>tres puntos (•••)</strong> arriba a la derecha<br>
+            <strong>2.</strong> Elegí <strong>"Abrir en Safari"</strong> o <strong>"Abrir en el navegador"</strong>
+          </div>
+          <button data-action="copiar-url" class="mt-2 text-xs bg-amber-600 active:bg-amber-700 text-white font-semibold px-3 py-1.5 rounded-lg">
+            Copiar dirección de la app
+          </button>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    ${bannerWebView}
+    <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200">
+      <div class="max-w-3xl mx-auto px-4 pt-3 pb-2">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <div class="text-[10px] font-bold tracking-[0.15em] text-blue-600 uppercase">Álbum Mundial 2026</div>
+            <div class="text-xl font-bold tracking-tight text-gray-900">${miNombre ? escapeHtml(miNombre) : 'Mi colección'}</div>
+          </div>
+          <button data-action="reset" class="text-xs text-gray-400 active:text-red-500">Borrar todo</button>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2 mt-2">
+          <div class="bg-gray-50 rounded-xl px-2.5 py-2">
+            <div class="text-[8px] uppercase tracking-wider text-gray-500 font-semibold">Tenés</div>
+            <div class="text-lg font-bold text-gray-900 tabular-nums leading-tight">${stats.tienen}</div>
+          </div>
+          <div class="bg-red-50 rounded-xl px-2.5 py-2">
+            <div class="text-[8px] uppercase tracking-wider text-red-600 font-semibold">Faltan</div>
+            <div class="text-lg font-bold text-red-600 tabular-nums leading-tight">${stats.faltan}</div>
+          </div>
+          <div class="bg-amber-50 rounded-xl px-2.5 py-2">
+            <div class="text-[8px] uppercase tracking-wider text-amber-700 font-semibold">Repes</div>
+            <div class="text-lg font-bold text-amber-600 tabular-nums leading-tight">${stats.totalRepes}</div>
+          </div>
+          <div class="bg-blue-50 rounded-xl px-2.5 py-2">
+            <div class="text-[8px] uppercase tracking-wider text-blue-600 font-semibold">Completo</div>
+            <div class="text-lg font-bold text-blue-600 tabular-nums leading-tight">${stats.pct}%</div>
+          </div>
+        </div>
+
+        <div class="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
+          <div class="h-full bg-blue-600 transition-all duration-300 rounded-full" style="width: ${stats.pct}%"></div>
+        </div>
+
+        <div class="flex gap-1.5 mt-3 bg-gray-100 p-1 rounded-2xl">
+          ${tabBtn('tengo', 'Tengo', stats.tienen)}
+          ${tabBtn('repes', 'Repes', stats.totalRepes)}
+          ${tabBtn('amigos', 'Compartir', cantAmigos)}
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto px-4 py-6 pb-32">
+      ${contenido}
+    </div>
+  `;
+
+  // Listener especial para el input de nombre (guardar al perder foco)
+  const inputNombre = document.getElementById('input-nombre');
+  if (inputNombre) {
+    inputNombre.addEventListener('blur', (e) => guardarNombre(e.target.value));
+  }
+}
+
+// Eventos
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'toggle') toggle(btn.dataset.id);
+  else if (action === 'sumar-repe') sumarRepe(btn.dataset.id);
+  else if (action === 'restar-repe') restarRepe(btn.dataset.id);
+  else if (action === 'marcar-equipo') marcarEquipo(btn.dataset.code);
+  else if (action === 'reset') resetTodo();
+  else if (action === 'copiar-url') {
+    const url = window.location.href;
+    // Si es file:// no tiene sentido copiar, mostramos instrucciones
+    if (url.startsWith('file:') || url.startsWith('blob:')) {
+      window.prompt('Esta app está guardada como archivo en tu celular. Tocá los tres puntos (•••) arriba y elegí "Abrir en Safari" para usarla bien.', 'Abrí desde Archivos > Safari');
+      return;
+    }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.contentEditable = 'true';
+      ta.readOnly = false;
+      const range = document.createRange();
+      range.selectNodeContents(ta);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      ta.setSelectionRange(0, 999999);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) {
+        alert('✅ Dirección copiada.\n\nAhora abrí Safari y pegala en la barra de direcciones.');
+      } else {
+        window.prompt('Copiá esta dirección y pegala en Safari:', url);
+      }
+    } catch (e) {
+      window.prompt('Copiá esta dirección y pegala en Safari:', url);
+    }
+  }
+  else if (action === 'tab') cambiarTab(btn.dataset.tab);
+  else if (action === 'compartir-codigo-wpp') {
+    // Capturamos el nombre sin re-renderizar (un render reemplaza el DOM
+    // y Safari iOS pierde el contexto del click, bloqueando la apertura)
+    const inp = document.getElementById('input-nombre');
+    if (inp) {
+      miNombre = (inp.value || '').trim().slice(0, 30);
+      try { localStorage.setItem(STORAGE_KEY_NOMBRE, miNombre); } catch (e) {}
+    }
+    compartirCodigo();
+  }
+  else if (action === 'copiar-codigo') {
+    const inp = document.getElementById('input-nombre');
+    if (inp) {
+      miNombre = (inp.value || '').trim().slice(0, 30);
+      try { localStorage.setItem(STORAGE_KEY_NOMBRE, miNombre); } catch (e) {}
+    }
+    compartirSoloCodigo();
+  }
+  else if (action === 'importar-amigo') {
+    const inp = document.getElementById('input-codigo-amigo');
+    if (inp) {
+      importarAmigo(inp.value);
+      inp.value = '';
+    }
+  }
+  else if (action === 'borrar-amigo') borrarAmigo(btn.dataset.nombre);
+  else if (action === 'match-wpp') {
+    const nombre = btn.dataset.nombre;
+    const a = amigos[nombre];
+    if (a) {
+      const amigoData = { tengo: new Set(a.marcadas), repes: a.repetidas || {} };
+      const match = calcularMatch(amigoData);
+      compartirMatchPorWpp(nombre, match);
+    }
+  }
+  else if (action === 'compartir-app') compartirApp();
+  else if (action === 'descargar-app') descargarApp();
+  else if (action === 'descargar-backup') descargarBackup();
+  else if (action === 'compartir-backup-wpp') compartirBackupWpp();
+  else if (action === 'abrir-restaurar-texto') {
+    const bloque = document.getElementById('bloque-restaurar-texto');
+    if (bloque) {
+      bloque.classList.remove('hidden');
+      const ta = document.getElementById('input-restore-texto');
+      if (ta) setTimeout(() => ta.focus(), 50);
+    }
+  }
+  else if (action === 'cancelar-restaurar-texto') {
+    const bloque = document.getElementById('bloque-restaurar-texto');
+    if (bloque) bloque.classList.add('hidden');
+    const ta = document.getElementById('input-restore-texto');
+    if (ta) ta.value = '';
+  }
+  else if (action === 'restaurar-desde-texto') {
+    const ta = document.getElementById('input-restore-texto');
+    if (ta) restaurarBackupDesdeTexto(ta.value);
+  }
+  else if (action === 'compartir-mama') compartirParaPadres('mama');
+  else if (action === 'compartir-papa') compartirParaPadres('papa');
+  else if (action === 'compartir-familia') compartirParaPadres('familia');
+});
+
+// Listener para el input file de restore (delegado, una sola vez)
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'input-restore') {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      restaurarBackupDesdeArchivo(file);
+      e.target.value = '';
+    }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
