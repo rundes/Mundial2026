@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.2.3 — 2026-05-18
+
+- Trofeo más chico y centrado en el ícono (ocupa ~55% del canvas en vez
+  del 75% anterior). Más aire alrededor → la silueta del objeto se lee
+  más clara a tamaños chicos (72-128 px del launcher Android).
+- Forma simplificada: sin asas (a tamaño chico se confundían con el
+  bowl), bowl más definido (rim ancho + cintura angosta + panza),
+  stem más corto y base de dos niveles compacta.
+- Highlight vertical más sutil + sombra del lado derecho para dar
+  volumen sin sobrecargar.
+- Cache busting `?v=1.2.3` y `CACHE_VERSION = album-2026-v1.2.3`.
+
 ## v1.2.2 — 2026-05-18
 
 - Trofeo más grande (ocupa ~75% del canvas), sin texto "2026" para que
