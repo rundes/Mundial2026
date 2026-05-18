@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2.4 — 2026-05-18
+
+- Ícono con leyenda: "MUNDIAL" en blanco arriba + "2026" en oro grande
+  abajo, debajo del trofeo. Compone como un cartel de evento deportivo.
+- Trofeo movido hacia arriba para dejar espacio al texto sin perder
+  legibilidad de la silueta.
+- Cache busting bumpeado a `?v=1.2.4` + `CACHE_VERSION='album-2026-v1.2.4'`.
+
 ## v1.2.3 — 2026-05-18
 
 - Trofeo más chico y centrado en el ícono (ocupa ~55% del canvas en vez
