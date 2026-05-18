@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.9.4 — 2026-05-18 — Fix WhatsApp en PWA (parte 2): protocolo directo
+
+### Fix
+- **El botón de WhatsApp seguía mostrando "Descargar WhatsApp" en PWA
+  instalada** aunque el usuario tuviera la app. El fix de v1.9.3 con
+  `navigator.share` cubre el caso ideal, pero si el navegador lo
+  rechazaba o no estaba disponible, caía a `wa.me` — y ese es
+  exactamente el flujo roto en PWA standalone: el WebView de la app
+  encapsulada abre la página de wa.me y el redirect JS a
+  `whatsapp://` no le llega al sistema, así que wa.me termina
+  mostrando la pantalla de descarga.
+- Cambio de fallback: ahora cuando detectamos **mobile + standalone
+  (PWA instalada)**, usamos directamente el protocolo
+  `whatsapp://send?text=...` sin pasar por wa.me. El sistema
+  operativo intercepta el esquema custom y abre la app nativa de
+  WhatsApp con el mensaje prellenado, listo para elegir contacto. En
+  navegador común (mobile o desktop) el comportamiento sigue siendo
+  `wa.me` con `target="_blank"`, que funciona bien ahí.
+
+### Infra
+- Cache busting `?v=1.9.4` y `CACHE_VERSION = 'album-2026-v1.9.4'`.
+
 ## v1.9.3 — 2026-05-18 — Fix WhatsApp en PWA + copiar solo el link
 
 ### Fixes
