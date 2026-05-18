@@ -36,10 +36,10 @@
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.8.2">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.8.2">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.8.2">
-<link rel="manifest" href="./manifest.webmanifest?v=1.8.2">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.8.3">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.8.3">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.8.3">
+<link rel="manifest" href="./manifest.webmanifest?v=1.8.3">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -71,23 +71,41 @@
   @keyframes bdot { 0%,100% { transform: scale(0.7); opacity: .55 } 50% { transform: scale(1.2); opacity: 1 } }
   #boot .b-title { font-weight: 700; color: #111827; font-size: 16px; }
 
-  /* Silueta genérica de jugador en pose de foto de plantilla.
-     Es un dibujo propio (cabeza redonda, torso, brazos al costado,
-     piernas y botines), no representa a nadie en particular. La usamos
-     como máscara y la pintamos con currentColor para que tome el color
-     del texto de la casilla (blanco si está marcada, gris si no). */
-  .silueta-jugador {
-    --silueta-svg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140'><circle cx='50' cy='22' r='13'/><rect x='46' y='34' width='8' height='5'/><path d='M28 50 C28 42 38 39 50 39 C62 39 72 42 72 50 L70 80 L30 80 Z'/><path d='M28 50 C24 53 22 60 22 70 L22 86 L30 86 L32 65 Z'/><path d='M72 50 C76 53 78 60 78 70 L78 86 L70 86 L68 65 Z'/><ellipse cx='26' cy='88' rx='5' ry='4'/><ellipse cx='74' cy='88' rx='5' ry='4'/><path d='M30 80 L70 80 L67 100 L53 100 L50 88 L47 100 L33 100 Z'/><path d='M33 100 L33 124 L46 124 L47 100 Z'/><path d='M53 100 L54 124 L67 124 L67 100 Z'/><ellipse cx='40' cy='128' rx='9' ry='4'/><ellipse cx='60' cy='128' rx='9' ry='4'/></svg>");
-    -webkit-mask-image: var(--silueta-svg);
-    mask-image: var(--silueta-svg);
-    -webkit-mask-position: center bottom;
-    mask-position: center bottom;
-    -webkit-mask-size: 78% auto;
-    mask-size: 78% auto;
+  /* Siluetas tipo busto (torso + cabeza) con diferentes peinados.
+     Dibujos propios formados por figuras geométricas básicas (paths,
+     ellipses y circles). No representan a ningún jugador en particular.
+     Usamos mask-image + background-color: currentColor para que la
+     silueta tome el color del texto de la casilla.
+     Variantes:
+       1 - Pelo corto / brush cut
+       2 - Rizado / fluffy
+       3 - Pelo medio-largo (cae a los hombros)
+       4 - Rapado / pelado
+       5 - Pelo ondulado medio
+       6 - Top knot / manbun */
+  :root {
+    --silueta-1: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M8 100 L8 88 Q10 70 26 62 L36 58 L36 50 L64 50 L64 58 L74 62 Q90 70 92 88 L92 100 Z'/><ellipse cx='50' cy='32' rx='15' ry='18'/><path d='M35 26 Q35 14 50 12 Q65 14 65 26 Z'/></svg>");
+    --silueta-2: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M8 100 L8 88 Q10 70 26 62 L36 58 L36 50 L64 50 L64 58 L74 62 Q90 70 92 88 L92 100 Z'/><ellipse cx='50' cy='32' rx='15' ry='18'/><circle cx='50' cy='18' r='13'/><circle cx='35' cy='22' r='6'/><circle cx='65' cy='22' r='6'/><circle cx='40' cy='13' r='5'/><circle cx='60' cy='13' r='5'/></svg>");
+    --silueta-3: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M8 100 L8 88 Q10 70 26 62 L36 58 L36 50 L64 50 L64 58 L74 62 Q90 70 92 88 L92 100 Z'/><ellipse cx='50' cy='32' rx='15' ry='18'/><path d='M32 30 Q28 10 50 8 Q72 10 68 30 L72 52 L65 56 L35 56 L28 52 Z'/></svg>");
+    --silueta-4: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M8 100 L8 88 Q10 70 26 62 L36 58 L36 50 L64 50 L64 58 L74 62 Q90 70 92 88 L92 100 Z'/><ellipse cx='50' cy='32' rx='15' ry='18'/></svg>");
+    --silueta-5: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M8 100 L8 88 Q10 70 26 62 L36 58 L36 50 L64 50 L64 58 L74 62 Q90 70 92 88 L92 100 Z'/><ellipse cx='50' cy='32' rx='15' ry='18'/><path d='M35 22 Q38 12 45 16 Q50 11 55 16 Q62 12 65 22 Z'/></svg>");
+    --silueta-6: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M8 100 L8 88 Q10 70 26 62 L36 58 L36 50 L64 50 L64 58 L74 62 Q90 70 92 88 L92 100 Z'/><ellipse cx='50' cy='32' rx='15' ry='18'/><circle cx='50' cy='11' r='7'/><path d='M37 22 Q40 17 50 17 Q60 17 63 22 Z'/></svg>");
+  }
+  .silueta {
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
     background-color: currentColor;
   }
+  .silueta-1 { -webkit-mask-image: var(--silueta-1); mask-image: var(--silueta-1); }
+  .silueta-2 { -webkit-mask-image: var(--silueta-2); mask-image: var(--silueta-2); }
+  .silueta-3 { -webkit-mask-image: var(--silueta-3); mask-image: var(--silueta-3); }
+  .silueta-4 { -webkit-mask-image: var(--silueta-4); mask-image: var(--silueta-4); }
+  .silueta-5 { -webkit-mask-image: var(--silueta-5); mask-image: var(--silueta-5); }
+  .silueta-6 { -webkit-mask-image: var(--silueta-6); mask-image: var(--silueta-6); }
 </style>
 </head>
 <body class="bg-white text-gray-900">
@@ -196,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.8.2';
+const APP_VERSION = '1.8.3';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -2026,8 +2044,9 @@ const renderCasillaTengo = (id, n, esp) => {
   const cls = tiene
     ? 'bg-blue-600 text-white shadow-sm'
     : 'bg-gray-100 text-gray-500 active:bg-gray-200';
-  const silueta = esJugador(id)
-    ? `<span aria-hidden="true" class="silueta-jugador absolute inset-0 ${tiene ? 'opacity-25' : 'opacity-30'} pointer-events-none"></span>`
+  const variante = esJugador(id) ? ((n - 1) % 6) + 1 : 0;
+  const silueta = variante
+    ? `<span aria-hidden="true" class="silueta silueta-${variante} absolute inset-0 ${tiene ? 'opacity-25' : 'opacity-30'} pointer-events-none"></span>`
     : '';
   return `<button data-id="${escapeAttr(id)}" data-action="toggle" class="relative aspect-square rounded-lg text-[10px] font-semibold transition-all overflow-hidden ${cls}">
     ${silueta}
@@ -2045,8 +2064,9 @@ const renderCasillaRepe = (id, n, esp) => {
   if (cant > 0) { bg = 'bg-amber-500 text-white shadow-sm'; text = `+${cant}`; }
   else if (tiene) { bg = 'bg-blue-50 text-blue-600 border border-blue-200'; text = ''; }
   else { bg = 'bg-gray-100 text-gray-400'; text = ''; }
-  const silueta = esJugador(id)
-    ? `<span aria-hidden="true" class="silueta-jugador absolute inset-0 ${cant > 0 ? 'opacity-25' : tiene ? 'opacity-35' : 'opacity-25'} pointer-events-none"></span>`
+  const variante = esJugador(id) ? ((n - 1) % 6) + 1 : 0;
+  const silueta = variante
+    ? `<span aria-hidden="true" class="silueta silueta-${variante} absolute inset-0 ${cant > 0 ? 'opacity-25' : tiene ? 'opacity-35' : 'opacity-25'} pointer-events-none"></span>`
     : '';
 
   return `<div class="aspect-square rounded-lg ${bg} relative flex flex-col items-center justify-center overflow-hidden">
@@ -2802,7 +2822,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.8.2" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.8.3" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3079,7 +3099,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.8.2" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.8.3" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
