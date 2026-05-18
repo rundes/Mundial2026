@@ -1,5 +1,37 @@
 # Changelog
 
+## v1.2 — 2026-05-18
+
+### Funcionalidades nuevas
+- **Versión visible en el footer.** Cada vista incluye un footer con
+  la versión actual (`APP_VERSION`), la fecha de build, el link al
+  repositorio en GitHub y un botón "Buscar actualización".
+- **Banner de "Nueva versión disponible".** Cuando el service worker
+  detecta un build más nuevo en el servidor, aparece un banner indigo
+  arriba con los botones **Actualizar** / **Después**:
+  - "Actualizar" le envía `SKIP_WAITING` al SW nuevo, que toma el control,
+    dispara `controllerchange` y la página se recarga automáticamente.
+  - "Después" oculta el banner por la sesión actual (no hasta el próximo
+    cambio remoto).
+  - El chequeo se hace al cargar, cada 30 minutos mientras la pestaña
+    está abierta, y cuando vuelve al foreground (`visibilitychange`).
+- **Botón "Buscar actualización"** en el footer para forzar el chequeo
+  cuando el usuario lo decide.
+- **Ícono del repositorio como ícono de la app.** El avatar de
+  `github.com/rundes` se procesa a 100/180/192/512 px y se referencia
+  desde la `link rel="apple-touch-icon"`, los `link rel="icon"` y el
+  `manifest.webmanifest`. En la pantalla de inicio de Android e iPhone
+  se ve el avatar real cuando se instala desde la URL pública.
+
+### Cambios internos
+- `manifest.webmanifest` se separa del HTML (antes era data URL).
+  Habilita refs `./icons/...` y permite que Chrome/Edge muestren los
+  íconos del manifest en el banner de instalación.
+- `sw.js` v1.2: precachea índice + manifest + íconos, soporta
+  `SKIP_WAITING` por mensaje, network-first para HTML, cache-first
+  para assets. `addAll` reemplazado por `add` individual con catch
+  para que un solo recurso roto no impida el install del SW.
+
 ## v1.1 — 2026-05-18
 
 ### Funcionalidades nuevas

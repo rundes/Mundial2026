@@ -18,7 +18,8 @@ Marcá las que tenés, anotá las repetidas y coordiná intercambios con tu fami
 - **Coincidencias automáticas:** pegás el código de un amigo y la app te muestra qué le podés dar y qué te puede dar él.
 - **Backup en WhatsApp:** mandate tu álbum a vos mismo y queda guardado para siempre. Si cambiás de celular, lo recuperás desde el chat.
 - **Compartí la app:** un solo botón genera el archivo HTML para mandárselo a un amigo. El archivo no incluye tus datos.
-- **Instalar en pantalla de inicio:** en Android, un toque al botón "Instalar" lo agrega como app. En iPhone, instrucciones paso a paso con Safari → *Compartir → Agregar a Inicio*.
+- **Instalar en pantalla de inicio:** en Android, un toque al botón "Instalar" lo agrega como app. En iPhone, instrucciones paso a paso con Safari → *Compartir → Agregar a Inicio*. El ícono usa el avatar del repo en GitHub.
+- **Actualización automática:** la app avisa con un banner cuando hay una versión nueva publicada. Un toque a "Actualizar" la aplica sin perder tus datos. La versión actual y un botón de chequeo manual están siempre visibles en el footer.
 
 ## Cómo funciona la privacidad
 
