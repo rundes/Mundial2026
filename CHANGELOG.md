@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.2.1 — 2026-05-18
+
+- Rediseño del set de íconos: silueta de chalice (copa clásica con asas,
+  pie y pedestal de dos niveles) en oro sobre fondo azul oscuro
+  cinematográfico, con luz, sombra, glow y viñeta. Diseño propio
+  genérico, no reproduce marcas registradas.
+- Tipografía "2026" en oro claro en la parte inferior, con sombra.
+- Maskable rediseñado con el contenido dentro del safe-zone (80%
+  central) para que Android no recorte partes importantes.
+- social-preview.png 1280×640 actualizado al nuevo estilo.
+
 ## v1.2 — 2026-05-18
 
 ### Funcionalidades nuevas
