@@ -18,6 +18,7 @@ Marcá las que tenés, anotá las repetidas y coordiná intercambios con tu fami
 - **Coincidencias automáticas:** pegás el código de un amigo y la app te muestra qué le podés dar y qué te puede dar él.
 - **Backup en WhatsApp:** mandate tu álbum a vos mismo y queda guardado para siempre. Si cambiás de celular, lo recuperás desde el chat.
 - **Compartí la app:** un solo botón genera el archivo HTML para mandárselo a un amigo. El archivo no incluye tus datos.
+- **Instalar en pantalla de inicio:** en Android, un toque al botón "Instalar" lo agrega como app. En iPhone, instrucciones paso a paso con Safari → *Compartir → Agregar a Inicio*.
 
 ## Cómo funciona la privacidad
 
@@ -60,11 +61,11 @@ Cada uno tiene su propia copia del álbum en su dispositivo. Los códigos se int
 - **Detección de modo privado / cuota llena** con avisos y fallback a `sessionStorage`.
 - **Sincronización entre pestañas** del mismo navegador.
 - **Endurecimiento de imports:** validación de tamaño máximo en código de amigo (100 KB), archivo de backup (5 MB) y cantidad de amigos guardados (50). Las IDs de figurita se validan contra una lista canónica para evitar inyección.
-- **Iconos PWA inline (SVG):** se puede agregar a pantalla de inicio en iOS y Android.
+- **PWA instalable:** manifest inline + service worker (`sw.js`) para que Android Chrome muestre el prompt nativo de instalación. En iOS Safari se instala con *Compartir → Agregar a Inicio*. Una vez instalada, abre en standalone (sin barra del navegador) y funciona 100% offline.
 
 ## Desarrollo
 
-El proyecto es **un único archivo `index.html`**. No hay build step ni framework.
+El proyecto es **un único archivo `index.html`** (más `sw.js` para soporte PWA y los archivos de documentación). No hay build step ni framework.
 
 ### Servirlo localmente
 ```bash

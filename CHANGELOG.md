@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.1 — 2026-05-18
+
+### Funcionalidades nuevas
+- **Botón "Instalar en pantalla de inicio"** en la pestaña Compartir.
+  - Android Chrome / Edge / Brave: usa el evento `beforeinstallprompt`
+    para mostrar el prompt nativo del navegador con un solo toque.
+  - iOS Safari: instrucciones visuales paso a paso (Compartir →
+    Agregar a Inicio).
+  - iOS no-Safari (Chrome iOS, etc.): aviso de abrir en Safari.
+  - Android sin prompt todavía: instrucciones manuales por menú.
+  - Detección automática del modo standalone para mostrar "ya está
+    instalada" en vez del botón cuando corresponde.
+- **Web App Manifest inline** (`application/manifest+json` data URL) con
+  name, short_name, icons (any + maskable, 512×512 SVG), display
+  standalone, theme_color, etc.
+- **Service worker** (`sw.js`): cache-first para assets, network-first
+  con fallback para la navegación. Permite que la instalación PWA en
+  Android funcione y refuerza el modo offline.
+
+### Cambios menores
+- Texto en *Pedir ayuda a la familia* aligerado (se eliminó la nota
+  sobre "comprando sobres").
+
 ## v1.0 — 2026-05-18
 
 Primera versión estable. La app es self-contained, funciona 100% offline,
