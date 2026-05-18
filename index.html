@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ Mi Álbum Mundial 2026 — gratis, sin registro">
 <meta property="og:description" content="Llevá el control de tu álbum del Mundial 2026: marcá las que tenés, anotá tus repes y coordiná intercambios por WhatsApp. Todo en tu propio celular.">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.7">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.7">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.8">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.8">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ Mi Álbum Mundial 2026">
 <meta name="twitter:description" content="App gratis para llevar tu álbum del Mundial 2026: marcá las que tenés, anotá tus repes y coordiná cambios por WhatsApp.">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.7">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.8">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.7">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.7">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.7">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.7">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.8">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.8">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.8">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.8">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.7';
+const APP_VERSION = '1.9.8';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -2376,11 +2376,11 @@ const renderCasillaTengo = (id, n, esp) => {
   const silueta = variante
     ? `<span aria-hidden="true" class="silueta silueta-${variante} absolute inset-0 ${tiene ? 'opacity-25' : 'opacity-30'} pointer-events-none"></span>`
     : '';
-  return `<button data-id="${escapeAttr(id)}" data-action="toggle" class="relative aspect-square rounded-lg text-[10px] font-semibold transition-all overflow-hidden ${cls}">
+  return `<button data-id="${escapeAttr(id)}" data-action="toggle" class="relative aspect-square rounded-lg font-semibold transition-all overflow-hidden ${cls}">
     ${silueta}
     <span class="relative z-10 flex flex-col items-center justify-center h-full leading-none">
-      <span class="text-[10px] font-bold">${n}</span>
-      ${esp ? `<span class="text-[8px] mt-0.5 ${tiene ? 'opacity-90' : 'opacity-70'}">${esp}</span>` : ''}
+      <span class="text-lg font-bold tabular-nums">${n}</span>
+      ${esp ? `<span class="text-[9px] mt-1 ${tiene ? 'opacity-90' : 'opacity-70'}">${esp}</span>` : ''}
     </span>
   </button>`;
 };
@@ -2399,9 +2399,9 @@ const renderCasillaRepe = (id, n, esp) => {
 
   return `<div class="aspect-square rounded-lg ${bg} relative flex flex-col items-center justify-center overflow-hidden">
     ${silueta}
-    <div class="relative z-10 text-[10px] font-bold leading-none">${n}</div>
-    ${esp ? `<div class="relative z-10 text-[8px] mt-0.5 ${cant > 0 || tiene ? '' : 'opacity-60'}">${esp}</div>` : ''}
-    ${text ? `<div class="relative z-10 text-[8px] mt-0.5 font-bold">${text}</div>` : ''}
+    <div class="relative z-10 text-lg font-bold tabular-nums leading-none">${n}</div>
+    ${esp ? `<div class="relative z-10 text-[9px] mt-1 ${cant > 0 || tiene ? '' : 'opacity-60'}">${esp}</div>` : ''}
+    ${text ? `<div class="relative z-10 text-[10px] mt-0.5 font-bold tabular-nums">${text}</div>` : ''}
     <div class="absolute inset-x-0 -bottom-1 z-20 flex justify-center gap-1">
       <button data-id="${escapeAttr(id)}" data-action="restar-repe" class="w-5 h-5 rounded-full bg-white border border-gray-300 text-gray-700 text-[11px] font-bold leading-none active:bg-gray-100 shadow-sm">−</button>
       <button data-id="${escapeAttr(id)}" data-action="sumar-repe" class="w-5 h-5 rounded-full bg-white border border-gray-300 text-gray-700 text-[11px] font-bold leading-none active:bg-gray-100 shadow-sm">+</button>
@@ -2528,7 +2528,7 @@ const renderSeccionExtra = (codigo, total, titulo, etiqueta, color, descripcion,
     } else {
       const tiene = marcadas.has(id);
       const cls = tiene ? `${color} text-white shadow-sm` : 'bg-gray-100 text-gray-500 active:bg-gray-200';
-      casillas += `<button data-id="${id}" data-action="toggle" class="aspect-square rounded-lg text-[10px] font-bold transition-all ${cls}">${n}</button>`;
+      casillas += `<button data-id="${id}" data-action="toggle" class="aspect-square rounded-lg text-lg font-bold tabular-nums transition-all ${cls}">${n}</button>`;
     }
   }
   const colorTexto = color === 'bg-blue-600' ? 'text-blue-600' : 'text-red-600';
@@ -2680,13 +2680,21 @@ const aplicarBusqueda = (modo) => {
   if (empty) empty.style.display = (q && totalVisibles === 0) ? '' : 'none';
 };
 
-// Barra de búsqueda compacta, sticky bajo el header. Se reusa para
-// Tengo y Repes con `modo`.
+// Barra de búsqueda. Diseño: pill blanca con sombra suave, ícono SVG
+// de lupa a la izquierda, botón X de SVG a la derecha que aparece
+// cuando hay valor. Foco: borde azul. El estado "tiene valor" se
+// muestra a través del botón X visible (no del color del borde,
+// porque sin re-render por keystroke no podríamos actualizarlo).
 const renderBuscador = (modo) => {
   const valor = modo === 'tengo' ? busquedaTengo : busquedaRepes;
-  return `<div class="-mx-4 px-4 pt-1 pb-3 bg-white mb-4">
+  return `<div class="mb-5">
     <div class="relative">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none" aria-hidden="true">🔎</span>
+      <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none flex items-center" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/>
+          <circle cx="11" cy="11" r="7"/>
+        </svg>
+      </span>
       <input
         type="search"
         id="buscador-${modo}"
@@ -2698,14 +2706,18 @@ const renderBuscador = (modo) => {
         spellcheck="false"
         enterkeyhint="search"
         aria-label="Buscar equipo o sección"
-        class="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-300">
+        class="w-full pl-11 pr-12 py-3 bg-white border-2 border-gray-200 rounded-2xl text-base shadow-sm focus:outline-none focus:border-blue-500 transition-colors">
       <button
         id="limpiar-busqueda-${modo}"
         data-action="limpiar-busqueda"
         data-modo="${modo}"
         aria-label="Limpiar búsqueda"
         style="${valor ? '' : 'display:none'}"
-        class="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-gray-200 active:bg-gray-300 text-gray-700 text-base font-bold leading-none flex items-center justify-center">×</button>
+        class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-100 active:bg-gray-200 text-gray-500 active:text-gray-700 flex items-center justify-center transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
     </div>
   </div>`;
 };
@@ -3206,7 +3218,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.7" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.8" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3282,7 +3294,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.7" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.8" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3560,7 +3572,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.7" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.8" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>

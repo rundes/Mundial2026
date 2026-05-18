@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.9.8 — 2026-05-18 — Polish del buscador + números de figus más grandes
+
+### Diseño del buscador
+- Input más prominente: pill blanca con borde de 2 px, sombra suave,
+  esquinas más redondeadas (`rounded-2xl`) y mayor altura (`py-3`).
+- Texto interior `text-base` (16 px) en vez de `text-sm`, mejor
+  legibilidad y previene el zoom automático al hacer foco en iOS.
+- Ícono de lupa ahora es un **SVG limpio** (line-icon, 20 px) en lugar
+  del emoji 🔎 — se ve más nítido en todos los sistemas.
+- Botón de limpiar también con ícono SVG (×), tamaño 32 px, área de
+  tap más cómoda.
+- Estado de foco: el borde se vuelve azul (`focus:border-blue-500`)
+  con transición de color suave.
+
+### Tipografía de los números de figuritas
+- Casillas de la pestaña **Tengo**: el número de la figurita pasa de
+  `text-[10px]` a **`text-lg`** (10 px → 18 px). Mucho más legible
+  para escanear el listado de un equipo y encontrar la que querés
+  marcar.
+- Casillas de la pestaña **Repes**: mismo cambio (10 px → 18 px) y
+  el contador `+N` de repetidas pasa de `text-[8px]` a `text-[10px]`.
+- Labels secundarios (`ESC`, `FG`) levemente más grandes
+  (`text-[8px]` → `text-[9px]`) para que sigan siendo claramente
+  secundarios pero más legibles.
+- Botones de **FWC** y **CC** (las secciones especiales): número
+  también pasa a `text-lg`, con `tabular-nums` para que se alineen
+  bien en columnas.
+
+### Infra
+- Cache busting `?v=1.9.8` y `CACHE_VERSION = 'album-2026-v1.9.8'`.
+
 ## v1.9.7 — 2026-05-18 — Buscador de equipos en Tengo y Repes
 
 ### Nuevo
