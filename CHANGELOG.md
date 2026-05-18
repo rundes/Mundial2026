@@ -1,5 +1,45 @@
 # Changelog
 
+## v1.4.0 — 2026-05-18 — Gamificación pack 1
+
+Primera tanda de mejoras de gamificación. Sin referencias al costo de los
+paquetes (varía mucho por zona).
+
+### Tarjetas de equipo con badges
+Cada equipo de la pestaña *Tengo* lleva ahora un chip de estado según
+cuántas figuritas le faltan:
+
+- 🏆 **Completo** (0 faltantes)
+- 🔥 **A 1 paso / A 2 pasos** (1-2 faltantes)
+- ⚡ **Casi** (3-5 faltantes)
+- 🌱 **A medias** (6-12 faltantes)
+- ❄️ **Recién** (13-19 faltantes)
+- 🆕 **Sin abrir** (20 faltantes)
+
+Cada tarjeta también muestra la bandera del país delante del nombre.
+
+### Botón "📲 Pedir las que faltan" por equipo
+Cuando a un equipo le faltan entre 1 y 5 figuritas, aparece un botón
+extra en su tarjeta que genera un mensaje WhatsApp hipersegmentado.
+
+### Widget de Countdown del Mundial
+Al inicio de la pestaña *Tengo*, card oscura con tres contadores:
+- 🏟️ Días para la Inauguración (11 jun 2026)
+- 🇦🇷 Días para el debut de Argentina (estimado 13 jun, fixture
+  sujeto a confirmación oficial)
+- 🏆 Días para la Final (19 jul 2026)
+
+### Widget "Casi están"
+Lista los 3 equipos a los que les faltan entre 1 y 5 figuritas con
+botón "📲 Pedir" para mensaje segmentado al toque.
+
+### Infra
+- Constantes `FECHAS_MUNDIAL`.
+- Funciones nuevas: `getBadgeEquipo`, `getEquiposMasCerca`,
+  `compartirEquipoEspecifico`, `diasHasta`, `renderCountdownWidget`,
+  `renderMasCercaWidget`.
+- Cache busting v=1.4.0 + CACHE_VERSION='album-2026-v1.4.0'.
+
 ## v1.3.1 — 2026-05-18
 
 ### Compartir lista — rediseño
