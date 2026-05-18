@@ -9,7 +9,7 @@ Marcá las que tenés, anotá las repetidas y coordiná intercambios con tu fami
 
 ## Características
 
-- **Álbum completo:** 12 grupos · 48 equipos · 20 figuritas por equipo · 19 especiales FWC · 14 especiales Coca-Cola (993 figuritas en total).
+- **Álbum completo:** 12 grupos · 48 equipos · 20 figuritas por equipo · 19 especiales FWC · 14 especiales Coca-Cola · figurita 00 (tapa holográfica) — **994 figuritas en total**.
 - **Tres pestañas:** *Tengo* (marcar lo que ya pegaste), *Repes* (contar repetidas) y *Compartir* (familia, amigos, backup).
 - **Compartir por WhatsApp:**
   - Lista de faltantes lista para mandarle a mamá/papá/familia con los nombres completos de los equipos.
@@ -18,7 +18,7 @@ Marcá las que tenés, anotá las repetidas y coordiná intercambios con tu fami
 - **Coincidencias automáticas:** pegás el código de un amigo y la app te muestra qué le podés dar y qué te puede dar él.
 - **Backup en WhatsApp:** mandate tu álbum a vos mismo y queda guardado para siempre. Si cambiás de celular, lo recuperás desde el chat.
 - **Compartí la app:** un solo botón genera el archivo HTML para mandárselo a un amigo. El archivo no incluye tus datos.
-- **Instalar en pantalla de inicio:** en Android, un toque al botón "Instalar" lo agrega como app. En iPhone, instrucciones paso a paso con Safari → *Compartir → Agregar a Inicio*. El ícono usa el avatar del repo en GitHub.
+- **Instalar en pantalla de inicio:** en Android, un toque al botón "Instalar" lo agrega como app. En iPhone, instrucciones paso a paso con Safari → *Compartir → Agregar a Inicio*. El ícono es un diseño original (trofeo genérico estilizado sobre dos cartas, sobre fondo azul).
 - **Actualización automática:** la app avisa con un banner cuando hay una versión nueva publicada. Un toque a "Actualizar" la aplica sin perder tus datos. La versión actual y un botón de chequeo manual están siempre visibles en el footer.
 
 ## Cómo funciona la privacidad
@@ -110,9 +110,24 @@ Como la app es self-contained, también se puede:
 - Servirlo desde cualquier hosting estático (Netlify, Cloudflare Pages, Vercel, S3, etc.).
 - Reenviarlo por WhatsApp/Telegram/email y abrirlo sin instalar nada.
 
+## Aviso legal / Disclaimers
+
+**Este es un proyecto de fan, sin fines de lucro de ningún tipo.**
+
+- **No oficial.** No está afiliado, asociado, autorizado, patrocinado, avalado ni vinculado de ninguna manera con la FIFA, Panini, The Coca-Cola Company, ninguna federación nacional de fútbol, ningún seleccionado, ni con ninguna otra organización, empresa, marca o entidad relacionada con la Copa Mundial de la FIFA 2026™ o con álbumes de figuritas oficiales.
+- **Sin monetización.** La aplicación es 100% gratuita. No tiene publicidad, no tiene compras dentro de la app, no tiene suscripciones, no acepta donaciones, no recolecta datos personales, no vende ni cede información a terceros. No existe modelo de negocio, directo ni indirecto. El analytics agregado (GoatCounter) sólo cuenta visitas anónimas sin cookies ni perfiles individuales.
+- **Sin contenido protegido.** La app no reproduce, distribuye ni almacena imágenes, fotografías, logos oficiales, escudos, isotipos, tipografías propietarias, mascotas, ni ningún otro contenido sujeto a derechos de autor o derechos conexos perteneciente a la FIFA, Panini, Coca-Cola, las federaciones de fútbol, los clubes o los jugadores. El usuario lleva la cuenta de su propio álbum físico, adquirido por separado, mediante referencias textuales a equipos y figuritas.
+- **Marcas registradas.** Los nombres "FIFA", "FIFA World Cup", "Mundial 2026", "Panini", "Coca-Cola", los nombres de selecciones nacionales y cualquier otra denominación o marca que pudiera aparecer en la interfaz son propiedad exclusiva de sus respectivos titulares. Se usan únicamente en sentido **nominativo/descriptivo** (referencia honesta para que el usuario identifique su álbum físico), no como indicadores de origen ni para sugerir afiliación. No se reivindica ningún derecho sobre ellos.
+- **Íconos y arte.** El conjunto de íconos de la app (incluido el del launcher de Android/iOS y la previsualización social) es **diseño original** del autor: una silueta genérica y estilizada de un trofeo deportivo sobre cartas, intencionalmente no figurativa y sin reproducir el diseño del trofeo oficial de la FIFA ni de ningún otro objeto registrado.
+- **Banderas.** Las banderas mostradas son emojis Unicode estándar (con fallback a SVG genéricos) provistos por el sistema operativo del usuario. No son recursos propios del proyecto.
+- **Reclamos de propiedad intelectual.** Si sos titular de derechos y considerás que algún elemento de este proyecto vulnera tu propiedad intelectual o tus marcas, abrí un *issue* en [el repositorio](https://github.com/rundes/Mundial2026/issues) o contactá al autor directamente: el material en cuestión se evaluará y removerá rápidamente de buena fe.
+- **Uso responsable.** Esta app es una herramienta personal de organización. Cualquier intercambio de figuritas físicas se hace bajo responsabilidad exclusiva de los usuarios. El autor no participa, intermedia ni garantiza ningún intercambio.
+
 ## Licencia
 
 MIT — ver [LICENSE](./LICENSE). Hacé fork, modificá, compartí. Si te sirvió, decímelo.
+
+La licencia MIT aplica al **código fuente** de este proyecto. No otorga ningún derecho sobre marcas registradas, nombres comerciales ni contenido de terceros mencionados en la sección anterior.
 
 ## Changelog
 

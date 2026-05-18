@@ -1,5 +1,121 @@
 # Changelog
 
+## v1.9.2 — 2026-05-18 — Nuevo set de íconos + disclaimers
+
+### Ícono
+- Nuevo arte: trofeo genérico estilizado sobre dos cartas, sobre fondo
+  azul sólido. **Diseño original**, intencionalmente no figurativo, no
+  reproduce marcas registradas.
+- Regenerados los 6 PNGs del set (`icon-100`, `icon-180`, `icon-192`,
+  `icon-512` + `icon-192-maskable`, `icon-512-maskable`) desde el nuevo
+  arte. Maskables con *safe area* al 80% sobre fondo azul sólido para
+  que los launchers de Android (círculo, squircle, rounded square) no
+  recorten partes importantes.
+- Cache busting bumpeado a `?v=1.9.2` y
+  `CACHE_VERSION = 'album-2026-v1.9.2'` en `index.html`,
+  `manifest.webmanifest` y `sw.js` para forzar refresh en clientes
+  con la versión anterior cacheada.
+
+### Documentación
+- **README** con bloque nuevo de *Aviso legal / Disclaimers* dejando
+  explícito que el proyecto es sin fines de lucro de ningún tipo, no
+  está afiliado con FIFA, Panini, Coca-Cola ni ninguna otra entidad,
+  no monetiza por ningún medio, no incluye contenido protegido por
+  derechos de autor, y usa los nombres de marcas registradas
+  únicamente en sentido nominativo/descriptivo.
+- **CHANGELOG** completado con las versiones intermedias (v1.5.0 a
+  v1.9.1) que se habían acumulado sin entrada formal.
+
+## v1.9.1 — 2026-05-18 — Fix shortener
+
+- Servicio de URL corta cambiado de `is.gd` a `cleanuri` por CORS.
+- Mensaje *friendly* al copiar el link compartido.
+
+## v1.9.0 — 2026-05-18 — Refactor compartir
+
+- Refactor del flujo de compartir: **un único mensaje** con la lista,
+  el link de auto-add del álbum y la URL acortada. Reemplaza los tres
+  flujos separados anteriores.
+
+## v1.8.5 — 2026-05-18 — Compartir álbum por link
+
+- Compartir álbum vía link con *preview* enriquecido tipo "perfil"
+  (banner social + datos del usuario).
+
+## v1.8.4 — 2026-05-18
+
+- Social preview image actualizada (provista por el usuario).
+
+## v1.8.3 — 2026-05-18
+
+- 6 variantes de silueta busto con distintos peinados para el fondo
+  decorativo de las casillas de equipo.
+
+## v1.8.2 — 2026-05-18
+
+- Silueta **genérica y no figurativa** de jugador como fondo decorativo
+  en cada casilla de equipo. Diseño propio, no reproduce imágenes de
+  jugadores reales.
+
+## v1.8.1 — 2026-05-18
+
+- Fix: los logros se reconcilian correctamente al restaurar backup y
+  al cargar la app.
+
+## v1.8.0 — 2026-05-18 — Importador Figuri
+
+- Importador compatible con mensajes generados por Figuri (figuri.app)
+  además del formato propio `AM26|...`.
+
+## v1.7.5 — 2026-05-18
+
+- Mensaje de *compartir el link* acortado, sin link duplicado.
+
+## v1.7.4 — 2026-05-18
+
+- Placeholder del nombre cambiado a "Diego Armando".
+
+## v1.7.3 — 2026-05-18 — Analytics no invasivo
+
+- Integración con **GoatCounter**: sin cookies, sin tracking individual,
+  sólo cuenta visitas agregadas anónimas. Ver detalles de privacidad
+  en `https://www.goatcounter.com/help/privacy`.
+
+## v1.7.2 — 2026-05-18
+
+- Fix de botones del FAB sheet.
+- Banderas SVG *cross-platform* como fallback cuando el emoji no
+  renderiza correctamente (ej. Windows).
+
+## v1.7.1 — 2026-05-18
+
+- Ícono maskable rediseñado con safe area más generoso para no
+  recortarse en los launchers redondos de Android.
+
+## v1.7.0 — 2026-05-18 — FAB compartir + Open Graph
+
+- Open Graph / Twitter Cards en el link de la app para *preview*
+  enriquecido al compartir por WhatsApp/Telegram/Twitter.
+- FAB (botón flotante) de compartir presente en todas las pestañas.
+- Carrusel automático de imágenes en el preview social.
+
+## v1.6.0 — 2026-05-18 — Gamificación pack 2
+
+- **Logros / achievements** desbloqueables según hitos del álbum.
+- **Tips** rotativos con sugerencias de uso.
+- Sección **"necesitan amor"** que destaca los equipos más rezagados
+  del álbum para motivar al usuario a completarlos.
+
+## v1.5.1 — 2026-05-18
+
+- Copy de la figurita 00 actualizado: se aclara que corresponde a la
+  tapa holográfica del álbum.
+
+## v1.5.0 — 2026-05-18 — Figurita 00
+
+- Se agrega la figurita 00 (doble cero / portada del álbum) al conteo
+  y a la UI. Total: 994 figuritas.
+
 ## v1.4.0 — 2026-05-18 — Gamificación pack 1
 
 Primera tanda de mejoras de gamificación. Sin referencias al costo de los
