@@ -36,10 +36,10 @@
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.8.0">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.8.0">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.8.0">
-<link rel="manifest" href="./manifest.webmanifest?v=1.8.0">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.8.1">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.8.1">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.8.1">
+<link rel="manifest" href="./manifest.webmanifest?v=1.8.1">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -178,7 +178,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.8.1';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -264,6 +264,7 @@ const importarAmigoDesdeURL = () => {
         fecha: Date.now(),
       };
       guardar();
+      chequearLogros();
       tabActiva = 'amigos';
       if (storage) try { storage.setItem(STORAGE_KEY_TAB, tabActiva); } catch (e) {}
       render();
@@ -1146,6 +1147,7 @@ const aplicarBackup = (datos) => {
 
   marcarBackupHecho();
   guardar();
+  chequearLogros();
   render();
   alert('✅ Backup restaurado con éxito');
   return true;
@@ -2769,7 +2771,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.8.0" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.8.1" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3046,7 +3048,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.8.0" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.8.1" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
@@ -3307,6 +3309,12 @@ document.addEventListener('change', (e) => {
 tomarSnapshotLimpio();
 
 render();
+
+// Chequeamos logros sobre los datos cargados desde localStorage. Si el usuario
+// venía con figuritas, repes o amigos cargados de antes y todavía no se le
+// marcaron los logros correspondientes (ej. tras una restauración de backup),
+// acá los reconciliamos y aparecen los toasts.
+chequearLogros();
 
 // Arrancamos el carrusel auto-rotante de "Casi están / Necesitan amor"
 iniciarCarrusel();
