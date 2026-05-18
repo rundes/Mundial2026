@@ -2,13 +2,24 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Álbum 2026">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2563eb">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Llevá el control de tu álbum del Mundial 2026: marcá las que tenés, anotá las repetidas y coordiná intercambios con tu familia y tus amigos por WhatsApp. Todo se guarda en tu dispositivo, sin registro y sin servidor.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50' y='68' font-size='44' font-weight='800' text-anchor='middle' fill='white' font-family='system-ui,Arial'>26</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%232563eb'/><text x='90' y='122' font-size='82' font-weight='800' text-anchor='middle' fill='white' font-family='system-ui,Arial'>26</text></svg>">
 <title>Mi Álbum Mundial 2026</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif; }
+  /* Estilos base que NO dependen de Tailwind: si la CDN falla, la app sigue siendo legible. */
+  html, body { background: #fff; color: #111827; margin: 0; }
+  body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif; line-height: 1.4; }
   .tabular-nums { font-variant-numeric: tabular-nums; }
   textarea { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
   /* Inputs en iOS sin zoom automático al hacer focus (mínimo 16px) */
@@ -19,10 +30,26 @@
   * { -webkit-overflow-scrolling: touch; }
   /* Safe area para iPhones con notch */
   body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  /* Accesibilidad: foco visible */
+  button:focus-visible, input:focus-visible, textarea:focus-visible, label:focus-visible, a:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+  /* Pantalla de boot para evitar flash sin estilos */
+  #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; background: #fff; z-index: 9999; font-size: 14px; color: #6b7280; }
+  #boot .b-dot { width: 10px; height: 10px; border-radius: 9999px; background: #2563eb; animation: bdot 1s infinite ease-in-out; }
+  @keyframes bdot { 0%,100% { transform: scale(0.7); opacity: .55 } 50% { transform: scale(1.2); opacity: 1 } }
+  #boot .b-title { font-weight: 700; color: #111827; font-size: 16px; }
+  /* Si Tailwind tarda más de 8s, mostramos un aviso de conexión */
+  #boot .b-slow { display: none; max-width: 280px; text-align: center; font-size: 12px; color: #b45309; background: #fef3c7; padding: 8px 12px; border-radius: 8px; }
+  #boot.slow .b-slow { display: block; }
 </style>
 </head>
 <body class="bg-white text-gray-900">
 
+<div id="boot" role="status" aria-live="polite">
+  <div class="b-title">Álbum Mundial 2026</div>
+  <div class="b-dot"></div>
+  <div>Cargando…</div>
+  <div class="b-slow">Está tardando más de lo normal. Revisá tu conexión a internet la primera vez que abrís la app.</div>
+</div>
 <div id="app"></div>
 
 <script>
@@ -153,34 +180,131 @@ const STORAGE_KEY_REPES = 'album-mundial-2026-repes';
 const STORAGE_KEY_TAB = 'album-mundial-2026-tab';
 const STORAGE_KEY_NOMBRE = 'album-mundial-2026-nombre';
 const STORAGE_KEY_AMIGOS = 'album-mundial-2026-amigos';
+const STORAGE_KEY_BACKUP_FECHA = 'album-mundial-2026-backup-fecha';
+const STORAGE_KEY_BACKUP_CAMBIOS = 'album-mundial-2026-backup-cambios';
+const STORAGE_KEY_BACKUP_DISMISS = 'album-mundial-2026-backup-dismiss';
+
+const MAX_AMIGOS = 50;
+const MAX_LEN_CODIGO = 100_000;
+const MAX_LEN_TEXTO_BACKUP = 5_000_000;
+const MAX_BYTES_ARCHIVO_BACKUP = 5_000_000;
+
+// ====== HELPERS UTF-8 SEGUROS (reemplazan escape/unescape obsoletos) ======
+const utf8aB64 = (str) => {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+};
+const b64aUtf8 = (b64) => {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+};
 
 let marcadas = new Set();
 let repetidas = {};
 let tabActiva = 'tengo';
 let miNombre = '';
 let amigos = {}; // { nombre: { marcadas: [...], repetidas: {...} } }
+let cambiosDesdeBackup = 0;
+let ultimoBackupTs = 0;
+let backupReminderDismissed = false;
+
+// Detectamos si localStorage está disponible (modo privado de Safari puede tirar excepción al escribir)
+let storage = null;
+try {
+  const test = '__t__' + Math.random();
+  localStorage.setItem(test, '1');
+  localStorage.removeItem(test);
+  storage = localStorage;
+} catch (e) {
+  try {
+    // Fallback a sessionStorage si localStorage está bloqueado
+    sessionStorage.setItem('__t__', '1');
+    sessionStorage.removeItem('__t__');
+    storage = sessionStorage;
+  } catch (e2) {
+    storage = null;
+  }
+}
 
 try {
-  const t = localStorage.getItem(STORAGE_KEY_TENGO);
-  if (t) marcadas = new Set(JSON.parse(t));
-  const r = localStorage.getItem(STORAGE_KEY_REPES);
-  if (r) repetidas = JSON.parse(r);
-  const tab = localStorage.getItem(STORAGE_KEY_TAB);
-  if (tab) tabActiva = tab;
-  const nm = localStorage.getItem(STORAGE_KEY_NOMBRE);
-  if (nm) miNombre = nm;
-  const am = localStorage.getItem(STORAGE_KEY_AMIGOS);
-  if (am) amigos = JSON.parse(am);
+  if (storage) {
+    const t = storage.getItem(STORAGE_KEY_TENGO);
+    if (t) marcadas = new Set(JSON.parse(t));
+    const r = storage.getItem(STORAGE_KEY_REPES);
+    if (r) repetidas = JSON.parse(r);
+    const tab = storage.getItem(STORAGE_KEY_TAB);
+    if (tab) tabActiva = tab;
+    const nm = storage.getItem(STORAGE_KEY_NOMBRE);
+    if (nm) miNombre = nm;
+    const am = storage.getItem(STORAGE_KEY_AMIGOS);
+    if (am) amigos = JSON.parse(am);
+    cambiosDesdeBackup = parseInt(storage.getItem(STORAGE_KEY_BACKUP_CAMBIOS) || '0', 10) || 0;
+    ultimoBackupTs = parseInt(storage.getItem(STORAGE_KEY_BACKUP_FECHA) || '0', 10) || 0;
+    backupReminderDismissed = storage.getItem(STORAGE_KEY_BACKUP_DISMISS) === '1';
+  }
 } catch (e) {}
 
+let yaAvisamosCuotaLlena = false;
+
 const guardar = () => {
+  if (!storage) return;
   try {
-    localStorage.setItem(STORAGE_KEY_TENGO, JSON.stringify([...marcadas]));
-    localStorage.setItem(STORAGE_KEY_REPES, JSON.stringify(repetidas));
-    localStorage.setItem(STORAGE_KEY_TAB, tabActiva);
-    localStorage.setItem(STORAGE_KEY_NOMBRE, miNombre);
-    localStorage.setItem(STORAGE_KEY_AMIGOS, JSON.stringify(amigos));
-  } catch (e) {}
+    storage.setItem(STORAGE_KEY_TENGO, JSON.stringify([...marcadas]));
+    storage.setItem(STORAGE_KEY_REPES, JSON.stringify(repetidas));
+    storage.setItem(STORAGE_KEY_TAB, tabActiva);
+    storage.setItem(STORAGE_KEY_NOMBRE, miNombre);
+    storage.setItem(STORAGE_KEY_AMIGOS, JSON.stringify(amigos));
+  } catch (e) {
+    // QuotaExceededError u otros: avisamos solo una vez para no spammear
+    if (!yaAvisamosCuotaLlena) {
+      yaAvisamosCuotaLlena = true;
+      setTimeout(() => alert('⚠️ No se pudo guardar tu progreso en este dispositivo.\n\nProbable causa: el navegador está en modo privado o se quedó sin espacio. Hacé un backup ya mismo (Compartir → Mandármelo por WhatsApp) para no perder los datos.'), 50);
+    }
+  }
+};
+
+const marcarCambio = () => {
+  cambiosDesdeBackup++;
+  backupReminderDismissed = false;
+  if (storage) {
+    try {
+      storage.setItem(STORAGE_KEY_BACKUP_CAMBIOS, String(cambiosDesdeBackup));
+      storage.removeItem(STORAGE_KEY_BACKUP_DISMISS);
+    } catch (e) {}
+  }
+};
+
+const marcarBackupHecho = () => {
+  cambiosDesdeBackup = 0;
+  ultimoBackupTs = Date.now();
+  backupReminderDismissed = false;
+  if (storage) {
+    try {
+      storage.setItem(STORAGE_KEY_BACKUP_CAMBIOS, '0');
+      storage.setItem(STORAGE_KEY_BACKUP_FECHA, String(ultimoBackupTs));
+      storage.removeItem(STORAGE_KEY_BACKUP_DISMISS);
+    } catch (e) {}
+  }
+};
+
+const necesitaBackup = () => {
+  if (backupReminderDismissed) return false;
+  if (marcadas.size === 0 && Object.keys(repetidas).length === 0) return false;
+  const semana = 7 * 24 * 3600 * 1000;
+  if (ultimoBackupTs === 0 && cambiosDesdeBackup >= 15) return true;
+  if (cambiosDesdeBackup >= 60) return true;
+  if (ultimoBackupTs > 0 && Date.now() - ultimoBackupTs > semana && cambiosDesdeBackup >= 5) return true;
+  return false;
+};
+
+const descartarRecordatorioBackup = () => {
+  backupReminderDismissed = true;
+  if (storage) { try { storage.setItem(STORAGE_KEY_BACKUP_DISMISS, '1'); } catch(e) {} }
+  render();
 };
 
 const todosLosEquipos = Object.values(GRUPOS).flat();
@@ -214,7 +338,9 @@ const codificarEstado = (nombre, tengo, repes) => {
 
 const decodificarEstado = (codigo) => {
   try {
-    if (!codigo || !codigo.startsWith('AM26|')) return null;
+    if (!codigo || typeof codigo !== 'string') return null;
+    if (codigo.length > MAX_LEN_CODIGO) return null;
+    if (!codigo.startsWith('AM26|')) return null;
     const partes = codigo.trim().split('|');
     if (partes.length < 3) return null;
     const nombre = partes[1] || 'amigo';
@@ -315,6 +441,7 @@ const calcularMatch = (amigoData) => {
 const toggle = (id) => {
   if (marcadas.has(id)) marcadas.delete(id);
   else marcadas.add(id);
+  marcarCambio();
   guardar();
   render();
 };
@@ -322,6 +449,7 @@ const toggle = (id) => {
 const sumarRepe = (id) => {
   if (!marcadas.has(id)) marcadas.add(id);
   repetidas[id] = (repetidas[id] || 0) + 1;
+  marcarCambio();
   guardar();
   render();
 };
@@ -330,6 +458,7 @@ const restarRepe = (id) => {
   if (!repetidas[id]) return;
   repetidas[id]--;
   if (repetidas[id] <= 0) delete repetidas[id];
+  marcarCambio();
   guardar();
   render();
 };
@@ -341,14 +470,25 @@ const marcarEquipo = (code) => {
     if (todas) marcadas.delete(`${code}${i}`);
     else marcadas.add(`${code}${i}`);
   }
+  marcarCambio();
   guardar();
   render();
 };
 
 const resetTodo = () => {
-  if (confirm('¿Borrar todas las marcas y repetidas? (Los amigos guardados se mantienen)')) {
+  const stats = calcStats();
+  if (stats.tienen === 0 && stats.totalRepes === 0) {
+    alert('Tu álbum ya está vacío.');
+    return;
+  }
+  const msg = `¿Borrar todas las marcas y repetidas?\n\n` +
+    `Vas a perder ${stats.tienen} figuritas y ${stats.totalRepes} repetidas.\n` +
+    `Los amigos guardados se mantienen.\n\n` +
+    `⚠️ Esta acción no se puede deshacer. Si todavía no hiciste un backup, cancelá y andá a Compartir → "Mandármelo por WhatsApp" primero.`;
+  if (confirm(msg)) {
     marcadas = new Set();
     repetidas = {};
+    marcarCambio();
     guardar();
     render();
   }
@@ -389,14 +529,14 @@ const generarTextoBackup = () => {
     amigos: amigos,
   };
 
-  // Codificamos en base64 para que el texto pegado no se rompa con caracteres especiales
+  // Codificamos en base64 UTF-8 seguro para que el texto pegado no se rompa
+  // con caracteres especiales (acentos, emojis en el nombre, etc.)
   const jsonStr = JSON.stringify(datos);
-  // btoa no maneja caracteres Unicode directamente; usamos encodeURIComponent + unescape
   let payload;
   try {
-    payload = btoa(unescape(encodeURIComponent(jsonStr)));
+    payload = utf8aB64(jsonStr);
   } catch (e) {
-    payload = btoa(jsonStr);
+    try { payload = btoa(jsonStr); } catch (e2) { payload = ''; }
   }
 
   const fechaLegible = new Date().toLocaleString('es-AR');
@@ -423,17 +563,18 @@ const generarTextoBackup = () => {
 
 const parsearTextoBackup = (texto) => {
   if (!texto || typeof texto !== 'string') return null;
+  if (texto.length > MAX_LEN_TEXTO_BACKUP) return null;
   const iStart = texto.indexOf(MARCA_INICIO);
   const iEnd = texto.indexOf(MARCA_FIN);
   if (iStart === -1 || iEnd === -1 || iEnd < iStart) return null;
   const payload = texto.substring(iStart + MARCA_INICIO.length, iEnd).trim();
-  if (!payload) return null;
+  if (!payload || payload.length > MAX_LEN_TEXTO_BACKUP) return null;
   try {
     let jsonStr;
     try {
-      jsonStr = decodeURIComponent(escape(atob(payload)));
+      jsonStr = b64aUtf8(payload);
     } catch (e) {
-      jsonStr = atob(payload);
+      try { jsonStr = atob(payload); } catch (e2) { return null; }
     }
     return JSON.parse(jsonStr);
   } catch (e) {
@@ -466,11 +607,42 @@ const aplicarBackup = (datos) => {
 
   if (!confirm(msg)) return false;
 
-  if (tieneMarcadas) marcadas = new Set(datos.marcadas);
-  if (tieneRepes) repetidas = datos.repetidas;
-  if (typeof datos.nombre === 'string') miNombre = datos.nombre;
-  if (datos.amigos && typeof datos.amigos === 'object') amigos = datos.amigos;
+  if (tieneMarcadas) {
+    // Filtramos solo IDs válidos para evitar inyectar basura desde un backup adulterado
+    const validos = new Set(ORDEN_FIGURITAS);
+    marcadas = new Set(datos.marcadas.filter(id => typeof id === 'string' && validos.has(id)));
+  }
+  if (tieneRepes) {
+    const validos = new Set(ORDEN_FIGURITAS);
+    const limpio = {};
+    Object.entries(datos.repetidas).forEach(([id, c]) => {
+      const n = parseInt(c, 10);
+      if (validos.has(id) && Number.isFinite(n) && n > 0 && n < 1000) limpio[id] = n;
+    });
+    repetidas = limpio;
+  }
+  if (typeof datos.nombre === 'string') miNombre = datos.nombre.slice(0, 30);
+  if (datos.amigos && typeof datos.amigos === 'object') {
+    // Limitamos cantidad de amigos para evitar bloating
+    const entradas = Object.entries(datos.amigos).slice(0, MAX_AMIGOS);
+    const limpio = {};
+    entradas.forEach(([nombre, a]) => {
+      if (typeof nombre !== 'string' || !a || typeof a !== 'object') return;
+      const validos = new Set(ORDEN_FIGURITAS);
+      const m = Array.isArray(a.marcadas) ? a.marcadas.filter(id => typeof id === 'string' && validos.has(id)) : [];
+      const r = {};
+      if (a.repetidas && typeof a.repetidas === 'object') {
+        Object.entries(a.repetidas).forEach(([id, c]) => {
+          const n = parseInt(c, 10);
+          if (validos.has(id) && Number.isFinite(n) && n > 0 && n < 1000) r[id] = n;
+        });
+      }
+      limpio[nombre.slice(0, 30)] = { marcadas: m, repetidas: r, fecha: typeof a.fecha === 'number' ? a.fecha : Date.now() };
+    });
+    amigos = limpio;
+  }
 
+  marcarBackupHecho();
   guardar();
   render();
   alert('✅ Backup restaurado con éxito');
@@ -491,6 +663,8 @@ const descargarBackup = () => {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1500);
+  marcarBackupHecho();
+  render();
 };
 
 // Compartir backup vía Web Share API (con archivo .txt) o WhatsApp (texto)
@@ -515,9 +689,15 @@ const compartirBackupWpp = () => {
         files: [file],
         title: 'Backup Álbum Mundial 2026',
         text: 'Backup de mi álbum del Mundial 2026.',
-      }).catch(() => {
+      }).then(() => {
+        marcarBackupHecho();
+        render();
+      }).catch((err) => {
+        if (err && err.name === 'AbortError') return;
         // Si el usuario cancela o falla, mandamos el backup como texto
         compartirWhatsApp(txt);
+        marcarBackupHecho();
+        render();
       });
       return;
     }
@@ -528,13 +708,23 @@ const compartirBackupWpp = () => {
   // Fallback: enviamos el backup completo como texto de WhatsApp
   // (igual queda guardado en el chat, que es lo que importa)
   compartirWhatsApp(txt);
+  marcarBackupHecho();
+  render();
 };
 
 const restaurarBackupDesdeArchivo = (file) => {
   if (!file) return;
+  if (file.size > MAX_BYTES_ARCHIVO_BACKUP) {
+    alert('❌ El archivo es demasiado grande (máximo 5 MB). No parece un backup válido de esta app.');
+    return;
+  }
   const reader = new FileReader();
   reader.onload = (e) => {
     const contenido = e.target.result;
+    if (typeof contenido !== 'string' || contenido.length > MAX_LEN_TEXTO_BACKUP) {
+      alert('❌ El archivo es demasiado grande para procesarlo.');
+      return;
+    }
     const datos = parsearTextoBackup(contenido);
     if (datos) {
       aplicarBackup(datos);
@@ -557,6 +747,10 @@ const restaurarBackupDesdeTexto = (texto) => {
     alert('Pegá el contenido del backup antes de restaurar.');
     return;
   }
+  if (texto.length > MAX_LEN_TEXTO_BACKUP) {
+    alert('❌ El texto es demasiado grande para procesarlo.');
+    return;
+  }
   const datos = parsearTextoBackup(texto);
   if (datos) {
     aplicarBackup(datos);
@@ -573,10 +767,37 @@ const restaurarBackupDesdeTexto = (texto) => {
 
 // ====== COMPARTIR LA APP ======
 
+// Snapshot del HTML LIMPIO de la app, sin datos del usuario. Se captura una
+// sola vez antes del primer render para que al compartir nunca filtremos
+// el nombre, el código personal, las marcas o los amigos.
+let HTML_LIMPIO_SNAPSHOT = null;
+const tomarSnapshotLimpio = () => {
+  try {
+    // Clonamos documentElement; sobre el clon vaciamos #app y #boot.
+    const clon = document.documentElement.cloneNode(true);
+    const appEl = clon.querySelector('#app');
+    if (appEl) appEl.innerHTML = '';
+    const bootEl = clon.querySelector('#boot');
+    if (bootEl && bootEl.parentNode) bootEl.parentNode.removeChild(bootEl);
+    // Removemos estilos inyectados en runtime por Tailwind CDN (no son necesarios:
+    // cuando el amigo abra el archivo, Tailwind volverá a generarlos).
+    clon.querySelectorAll('style[data-tailwind], style[id^="tailwind"], style[data-tw]').forEach(s => s.remove());
+    HTML_LIMPIO_SNAPSHOT = '<!DOCTYPE html>\n' + clon.outerHTML;
+  } catch (e) {
+    HTML_LIMPIO_SNAPSHOT = null;
+  }
+};
+
+const obtenerHtmlLimpio = () => {
+  // Si por algún motivo no tenemos snapshot, hacemos uno on-the-fly.
+  if (!HTML_LIMPIO_SNAPSHOT) tomarSnapshotLimpio();
+  return HTML_LIMPIO_SNAPSHOT || ('<!DOCTYPE html>\n' + document.documentElement.outerHTML);
+};
+
 const compartirApp = () => {
   try {
-    const htmlActual = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    const blob = new Blob([htmlActual], { type: 'text/html' });
+    const htmlLimpio = obtenerHtmlLimpio();
+    const blob = new Blob([htmlLimpio], { type: 'text/html' });
     const file = new File([blob], 'mi-album-mundial-2026.html', { type: 'text/html' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -598,8 +819,8 @@ const compartirApp = () => {
 };
 
 const descargarApp = () => {
-  const htmlActual = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-  const blob = new Blob([htmlActual], { type: 'text/html' });
+  const htmlLimpio = obtenerHtmlLimpio();
+  const blob = new Blob([htmlLimpio], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -618,7 +839,12 @@ const importarAmigo = (codigo) => {
     alert('El código no es válido. Pegalo completo, empieza con AM26|');
     return;
   }
-  // Si ya existe con ese nombre, lo sobreescribe (actualización)
+  // Si ya existe con ese nombre, lo sobreescribimos (actualización).
+  // Si es un amigo nuevo y ya alcanzamos el tope, avisamos.
+  if (!(data.nombre in amigos) && Object.keys(amigos).length >= MAX_AMIGOS) {
+    alert(`Ya tenés ${MAX_AMIGOS} amigos guardados (el máximo). Borrá alguno antes de agregar otro.`);
+    return;
+  }
   amigos[data.nombre] = {
     marcadas: [...data.tengo],
     repetidas: data.repes,
@@ -1287,7 +1513,10 @@ const renderTabAmigos = () => {
     <div class="mb-6">
       <div class="text-[10px] font-bold tracking-[0.15em] text-emerald-600 uppercase mb-1">Cuidá tus datos</div>
       <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-1">Copia de seguridad</h3>
-      <p class="text-sm text-gray-500 mb-4">Mandate tu backup a vos mismo por WhatsApp y queda guardado para siempre en tu historial. Si cambiás de celular o borrás el navegador, lo recuperás desde ahí.</p>
+      <p class="text-sm text-gray-500 mb-2">Mandate tu backup a vos mismo por WhatsApp y queda guardado para siempre en tu historial. Si cambiás de celular o borrás el navegador, lo recuperás desde ahí.</p>
+      ${ultimoBackupTs > 0
+        ? `<p class="text-xs text-gray-500 mb-4">Última copia: <strong class="text-gray-700">${new Date(ultimoBackupTs).toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</strong> · ${cambiosDesdeBackup} cambios desde entonces.</p>`
+        : `<p class="text-xs text-amber-700 mb-4 font-semibold">⚠️ Todavía no hiciste ningún backup.</p>`}
 
       <div class="bg-emerald-50 rounded-2xl p-5">
         <div class="bg-white rounded-xl p-3 mb-4 flex items-start gap-3">
@@ -1350,6 +1579,20 @@ const renderTabAmigos = () => {
         </p>
       </div>
     </div>
+
+    <!-- ===== SOBRE LA APP / PRIVACIDAD ===== -->
+    <div class="mt-10 mb-4 bg-gray-50 rounded-2xl p-5 border border-gray-200">
+      <div class="text-[10px] font-bold tracking-[0.15em] text-gray-600 uppercase mb-1">Sobre la app</div>
+      <h3 class="text-lg font-bold tracking-tight text-gray-900 mb-2">Gratis, privada y sin registro</h3>
+      <ul class="text-xs text-gray-600 leading-relaxed space-y-1.5">
+        <li>✅ <strong>Es gratis</strong> y la podés compartir con quien quieras. No tiene publicidad ni pide pagos.</li>
+        <li>🔒 <strong>Tus datos viven solo en tu dispositivo.</strong> No hay servidor, no hay cuenta, no mandamos nada a internet. Cuando compartís tu código, vos elegís a quién se lo pasás.</li>
+        <li>📱 <strong>Funciona sin conexión</strong> una vez que cargó la primera vez (necesita internet solo para cargar los estilos).</li>
+        <li>💾 <strong>Hacé backup seguido.</strong> Si formateás el celular, cambiás de navegador o borrás los datos, se pierde todo.</li>
+        <li>🤝 <strong>Sin cuentas, sin contraseñas.</strong> Cada uno tiene su propia copia y se comparten códigos por WhatsApp.</li>
+      </ul>
+      <p class="text-[10px] text-gray-400 mt-3">Versión 1.0 · Mundial 2026 · Hecho con cariño para coleccionistas.</p>
+    </div>
   `;
 };
 
@@ -1365,13 +1608,43 @@ function render() {
 
   const tabBtn = (id, label, badge) => {
     const activa = tabActiva === id;
-    return `<button data-action="tab" data-tab="${id}" class="flex-1 px-2 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
+    return `<button data-action="tab" data-tab="${id}" role="tab" aria-selected="${activa ? 'true' : 'false'}" class="flex-1 px-2 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
       activa ? 'bg-gray-900 text-white shadow-sm' : 'bg-transparent text-gray-600 active:bg-gray-100'
     }">
       ${label}
       ${badge !== null && badge !== undefined ? `<span class="ml-1 inline-block text-[10px] font-bold tabular-nums ${activa ? 'text-white/80' : 'text-gray-400'}">${badge}</span>` : ''}
     </button>`;
   };
+
+  // Banner de recordatorio de backup
+  const bannerBackup = necesitaBackup() ? `
+    <div class="bg-emerald-50 border-b border-emerald-200 px-4 py-2.5">
+      <div class="max-w-3xl mx-auto flex items-start gap-2">
+        <span class="text-lg shrink-0">💾</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-semibold text-emerald-900 leading-tight">Hacé un backup de tu álbum</div>
+          <div class="text-xs text-emerald-800 mt-0.5">${ultimoBackupTs === 0 ? 'Todavía no guardaste ninguna copia.' : `Hace ${Math.floor((Date.now() - ultimoBackupTs) / (24*3600*1000))} días que no hacés backup.`} Cargaste ${cambiosDesdeBackup} cambios desde la última.</div>
+          <div class="flex gap-2 mt-1.5">
+            <button data-action="tab" data-tab="amigos" class="text-xs bg-emerald-600 active:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg">Hacer backup</button>
+            <button data-action="dismiss-backup" class="text-xs text-emerald-800 active:text-emerald-900 font-semibold px-2 py-1.5">Más tarde</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  // Banner si no hay almacenamiento disponible (modo privado, etc.)
+  const bannerSinStorage = !storage ? `
+    <div class="bg-red-100 border-b-2 border-red-400 px-4 py-2.5">
+      <div class="max-w-3xl mx-auto flex items-start gap-2">
+        <span class="text-lg shrink-0">🚫</span>
+        <div class="flex-1 min-w-0 text-xs text-red-900">
+          <strong class="text-sm">No vamos a poder guardar tu progreso.</strong><br>
+          Estás en modo privado o el navegador bloquea el guardado. Cuando cierres la pestaña vas a perder todo. Cambiá a modo normal para que funcione.
+        </div>
+      </div>
+    </div>
+  ` : '';
 
   // Banner de aviso si estamos dentro de WhatsApp/Instagram WebView
   const bannerWebView = WEBVIEW_INFO.esWebView ? `
@@ -1395,7 +1668,9 @@ function render() {
 
   const app = document.getElementById('app');
   app.innerHTML = `
+    ${bannerSinStorage}
     ${bannerWebView}
+    ${bannerBackup}
     <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200">
       <div class="max-w-3xl mx-auto px-4 pt-3 pb-2">
         <div class="flex items-center justify-between mb-2">
@@ -1429,7 +1704,7 @@ function render() {
           <div class="h-full bg-blue-600 transition-all duration-300 rounded-full" style="width: ${stats.pct}%"></div>
         </div>
 
-        <div class="flex gap-1.5 mt-3 bg-gray-100 p-1 rounded-2xl">
+        <div role="tablist" class="flex gap-1.5 mt-3 bg-gray-100 p-1 rounded-2xl">
           ${tabBtn('tengo', 'Tengo', stats.tienen)}
           ${tabBtn('repes', 'Repes', stats.totalRepes)}
           ${tabBtn('amigos', 'Compartir', cantAmigos)}
@@ -1447,6 +1722,10 @@ function render() {
   if (inputNombre) {
     inputNombre.addEventListener('blur', (e) => guardarNombre(e.target.value));
   }
+
+  // Si todavía está el boot screen, lo sacamos.
+  const boot = document.getElementById('boot');
+  if (boot && boot.parentNode) boot.parentNode.removeChild(boot);
 }
 
 // Eventos
@@ -1552,6 +1831,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'compartir-mama') compartirParaPadres('mama');
   else if (action === 'compartir-papa') compartirParaPadres('papa');
   else if (action === 'compartir-familia') compartirParaPadres('familia');
+  else if (action === 'dismiss-backup') descartarRecordatorioBackup();
 });
 
 // Listener para el input file de restore (delegado, una sola vez)
@@ -1565,7 +1845,39 @@ document.addEventListener('change', (e) => {
   }
 });
 
+// Tomamos un snapshot LIMPIO del HTML antes de inyectar cualquier dato del
+// usuario. Esto es lo que vamos a compartir cuando le pasemos la app a un amigo.
+// Si lo hacemos después de render(), el HTML quedaría con el nombre, código y
+// figuritas marcadas del usuario actual (¡fuga de datos!).
+tomarSnapshotLimpio();
+
+// Activamos el aviso de "carga lenta" si Tailwind tarda demasiado
+setTimeout(() => {
+  const boot = document.getElementById('boot');
+  if (boot) boot.classList.add('slow');
+}, 8000);
+
 render();
+
+// Sincronizamos cambios entre pestañas/ventanas abiertas del mismo navegador
+window.addEventListener('storage', (e) => {
+  if (!e.key || !e.key.startsWith('album-mundial-2026')) return;
+  try {
+    if (storage) {
+      const t = storage.getItem(STORAGE_KEY_TENGO);
+      marcadas = t ? new Set(JSON.parse(t)) : new Set();
+      const r = storage.getItem(STORAGE_KEY_REPES);
+      repetidas = r ? JSON.parse(r) : {};
+      const nm = storage.getItem(STORAGE_KEY_NOMBRE);
+      miNombre = nm || '';
+      const am = storage.getItem(STORAGE_KEY_AMIGOS);
+      amigos = am ? JSON.parse(am) : {};
+      cambiosDesdeBackup = parseInt(storage.getItem(STORAGE_KEY_BACKUP_CAMBIOS) || '0', 10) || 0;
+      ultimoBackupTs = parseInt(storage.getItem(STORAGE_KEY_BACKUP_FECHA) || '0', 10) || 0;
+      render();
+    }
+  } catch (err) {}
+});
 </script>
 </body>
 </html>
