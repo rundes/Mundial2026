@@ -1,5 +1,40 @@
 # Changelog
 
+## v1.3.0 — 2026-05-18
+
+### Funcionalidades nuevas
+- **Sincronización por código QR**. En la pestaña Compartir, debajo del
+  campo "Tu nombre", aparece un botón grande "Mostrar mi QR". Al tocarlo
+  se abre un modal con un QR que contiene un deep link a la app más el
+  código de amigo del usuario.
+  - El receptor (mamá/papá) abre la cámara común de su celular, apunta
+    al QR y toca la notificación que aparece. El navegador abre la URL
+    `https://rundes.github.io/Mundial2026/?import=AM26|...` y la app
+    detecta el parámetro `?import=`, decodifica el código y le ofrece
+    agregar al emisor como amigo de una.
+  - No hace falta que el receptor tenga la app instalada todavía: la
+    URL la abre primero y la app se carga ahí.
+  - El modal también incluye un botón "Mandar link" que comparte la
+    URL por WhatsApp como fallback para gente que no puede escanear el
+    QR (ej. están lejos).
+  - Cap de 50 amigos y validación de tamaño aplicada igual que en el
+    flujo de copy-paste.
+  - Caso especial: si el amigo ya existe, ofrece actualizar sus datos.
+- **Ícono con leyenda "MUNDIAL 2026" prominente** debajo del trofeo.
+  "MUNDIAL" en blanco arriba + "2026" en oro grande abajo, leíble a
+  72 px del launcher.
+
+### Infraestructura
+- Inlining de `qrcode-generator` 1.4.4 (≈20 KB minificado, MIT, ©
+  Kazuhiko Arase) como `<script>` separado antes del script principal.
+  Atribución preservada en comentario HTML.
+- Manejo de `?import=...` al cargar la app (se limpia la URL con
+  `history.replaceState` antes de mostrar el confirm para que un
+  refresh no re-dispare el flujo).
+- `tomarSnapshotLimpio` sigue funcionando: el snapshot incluye ambos
+  scripts y los amigos receptores reciben una app idéntica.
+- Cache busting bumpeado a `?v=1.3.0` y `CACHE_VERSION='album-2026-v1.3.0'`.
+
 ## v1.2.4 — 2026-05-18
 
 - Ícono con leyenda: "MUNDIAL" en blanco arriba + "2026" en oro grande
