@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.9.5 — 2026-05-18 — Fix WhatsApp (parte 3): saltar wa.me en mobile
+
+### Fix
+- **Los emojis del mensaje aparecían como `�` (REPLACEMENT CHARACTER)
+  en la pantalla de wa.me**, además de seguir cayendo en "Descargar
+  WhatsApp" en navegador común (no solo en PWA standalone).
+- Causa: para mensajes largos (lista completa de faltantes + link
+  AM26 con el estado serializado), `wa.me` corrompe el encoding al
+  hacer el redirect a `api.whatsapp.com/send` — los emojis terminan
+  como `%EF%BF%BD` en la URL final. Verificado: el archivo local y
+  el desplegado en GitHub Pages tienen los emojis correctos
+  (`%E2%9A%BD` para ⚽), la corrupción ocurre en el middleman.
+- Fix: en **mobile (sea PWA standalone o navegador común)** ahora
+  salteamos `wa.me` por completo y usamos directamente el protocolo
+  `whatsapp://send?text=...`. El OS intercepta el esquema custom y
+  abre la app nativa de WhatsApp con el mensaje **intacto** (sin
+  redirect que rompa el encoding). Se asume que el usuario tiene
+  WhatsApp instalado (premisa de la app).
+- En **desktop** se mantiene `wa.me` con `target="_blank"`, que
+  abre WhatsApp Web correctamente.
+- `navigator.share()` sigue siendo el path primario cuando está
+  disponible (mejor UX, sheet nativo del OS).
+
+### Infra
+- Cache busting `?v=1.9.5` y `CACHE_VERSION = 'album-2026-v1.9.5'`.
+
 ## v1.9.4 — 2026-05-18 — Fix WhatsApp en PWA (parte 2): protocolo directo
 
 ### Fix
