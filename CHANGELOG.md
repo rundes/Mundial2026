@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.9.20 — 2026-05-18 — Dropdown de sugerencias en los buscadores
+
+### Nuevo
+- En los buscadores de **Tengo** y **Repes**, al tipear **3+ letras**
+  aparece un dropdown debajo del input con los equipos que matchean
+  por nombre o por sigla. Cada fila:
+  > 🇦🇷  **ARG**  Argentina
+- Tap a una fila → fija el filtro al code exacto del equipo (queda
+  `ARG` en el input) y cierra el dropdown + teclado. Útil cuando no
+  estás seguro de cómo se escribe el país (ej. "rep checa" vs
+  "republica checa" vs "czechia") o cuando hay varios países que
+  empiezan igual ("Arge..." → Argentina y Argelia).
+- Match: nombre o sigla con normalización (case-insensitive, sin
+  acentos). Máximo 8 sugerencias por lista para no saturar.
+
+### Infra
+- Helper nuevo `actualizarSugerencias(modo)` que se llama después de
+  `aplicarBusqueda` en cada keystroke + al render para preservar el
+  estado del dropdown si volvés de otra pestaña con búsqueda activa.
+- Acción nueva `seleccionar-equipo`.
+- El dropdown va con `position: absolute` + `z-30` sobre el input,
+  no empuja contenido. Scroll interno si hay más de ~5 sugerencias.
+- Cache busting `?v=1.9.20` y `CACHE_VERSION = 'album-2026-v1.9.20'`.
+
 ## v1.9.19 — 2026-05-18 — Confirmación antes de desmarcar figuritas
 
 ### Cambio
