@@ -1,5 +1,55 @@
 # Changelog
 
+## v1.9.22 — 2026-05-19 — Push manual a cada amigo + indicador "sin avisar"
+
+### Modelo nuevo de vínculos persistentes
+- Sin servidor ni servicios extra: el "transporte" sigue siendo el chat
+  de WhatsApp con cada amigo. Ahora la app **te ayuda explícitamente**
+  a saber cuándo tu link viejo quedó desactualizado y a mandarlo de
+  nuevo en un toque.
+
+### Indicador por amigo
+- Cada card muestra una segunda línea, debajo de la freshness, con el
+  estado de **TU link en su app** desde tu última actualización:
+  - **Nunca le mandaste tu link** (gris)
+  - **✓ Tu álbum está al día con él/ella** (verde, 0 cambios)
+  - **📤 N cambios sin avisarle** (amarillo, 1-10 cambios)
+  - **📤 N cambios — reenviá tu link** (rojo, >10 cambios)
+- El contador se incrementa con cada cambio del usuario (marcar,
+  desmarcar, sumar/restar repe, marcar todas), por la cantidad real
+  de figuritas que cambiaron.
+
+### Botón "Mandarle mi álbum actualizado"
+- En la vista expandida del amigo, prominente arriba de las acciones
+  secundarias. Color según urgencia (verde / ámbar / rojo).
+- Tap → arma un mensaje **corto y personalizado** con el link
+  acortado: `⚽ ¡Hola Lucas! Te paso mi álbum del Mundial 2026
+  actualizado (soy Diego). Tocá el link para que tu app vea qué
+  podemos intercambiar: <short URL>`
+- Resetea el contador de "cambios sin avisar" para ese amigo
+  específicamente — los otros amigos siguen viendo su propio contador.
+- Si nunca le mandaste tu link, el botón dice "Mandarle mi álbum por
+  primera vez" (verde).
+
+### Otros cambios menores
+- El botón "Pedir update" pasó a llamarse "Pedirle su update" para
+  diferenciarlo del nuevo "Mandarle mi álbum".
+- La "Propuesta" se mantiene pero pasa a verde-outline (acción
+  secundaria) para que el botón push quede como acción principal.
+- La línea de freshness en vista expandida ahora dice "Tu data de
+  él/ella: hace N días" para que sea claro qué representa.
+
+### Infra
+- Nuevo campo por amigo: `cambiosDesdeUltimoShare` (number) y
+  `ultimoShareAEsteTs` (timestamp).
+- `marcarCambio(cantidad)` ahora bumpea el contador en cada amigo
+  por la cantidad indicada (default 1).
+- Nueva función `compartirLinkAEsteAmigo(nombre)` con flow async
+  (overlay "Preparando link…" si el short URL no está cacheado) +
+  alerta si el shortener falla por completo.
+- Nueva acción `compartir-a-amigo`.
+- Cache busting `?v=1.9.22` y `CACHE_VERSION = 'album-2026-v1.9.22'`.
+
 ## v1.9.21 — 2026-05-18 — Fix del dropdown de sugerencias (ancho + click)
 
 ### Fix
