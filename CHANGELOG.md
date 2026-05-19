@@ -1,5 +1,45 @@
 # Changelog
 
+## v1.9.14 — 2026-05-18 — Nuevo shortener con cascada de servicios + QR usa link corto
+
+### Fix
+- `cleanuri.com` (que se introdujo en v1.9.1 reemplazando a `is.gd`)
+  dejó de funcionar de forma confiable. Cuando fallaba, el "Mandar
+  por WhatsApp" y "Copiar link" caían al link largo (con el código
+  AM26 base64 y el nombre del usuario embebidos), lo cual es feo y
+  además a veces excede los límites de longitud de URL que aceptan
+  algunos clientes.
+
+### Cambio
+- Nuevo `acortarUrl` con **cascada de servicios**: prueba uno a uno
+  hasta que alguno responde bien. Todos son free, sin API key, con
+  CORS habilitado:
+  1. **TinyURL** (`tinyurl.com/api-create.php`) — el más estable y
+     conocido, existe desde 2002. Primer intento.
+  2. **is.gd** (`is.gd/create.php?format=json`) — fallback si TinyURL
+     no responde.
+  3. **da.gd** (`da.gd/s`) — terciario, mínimo y simple.
+  Si los tres fallan, devolvemos la URL larga (sigue siendo
+  funcional, sólo más fea).
+- El **QR ahora también se beneficia del link corto** cuando está
+  cacheado. Al abrir la pestaña Compartir se pre-acorta en background;
+  cuando tocás "Mostrar QR" ya está listo. QR más chico = más fácil
+  de escanear desde otro celular. Si todavía no se acortó, se genera
+  con el largo (funciona igual) y se dispara el acortado en
+  background para la próxima.
+
+### Documentación
+- El bloque "Sobre la app" actualizado para listar los tres servicios
+  con sus links a la página principal de cada uno (transparencia
+  sobre dónde va la data).
+- El "footer" del unfurl preview ahora dice `tinyurl · rundes.github.io`
+  en vez de `cleanuri · rundes.github.io`.
+
+### Infra
+- Cache de short URL sigue funcionando igual. Si la URL larga no
+  cambió (mismo álbum), se reusa el short URL ya generado.
+- Cache busting `?v=1.9.14` y `CACHE_VERSION = 'album-2026-v1.9.14'`.
+
 ## v1.9.13 — 2026-05-18 — Nuevo copy de la caja de compartir
 
 ### Cambio

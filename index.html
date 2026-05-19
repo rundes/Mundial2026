@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ ¡Cambiemos figuritas!">
 <meta property="og:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.13">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.13">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.14">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.14">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ ¡Cambiemos figuritas!">
 <meta name="twitter:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.13">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.14">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.13">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.13">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.13">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.13">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.14">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.14">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.14">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.14">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.13';
+const APP_VERSION = '1.9.14';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -244,7 +244,11 @@ const mostrarQRSync = () => {
     alert('Antes de generar el QR, escribí tu nombre en el campo "Tu nombre" más abajo.');
     return;
   }
-  const url = generarUrlSync();
+  const longUrl = generarUrlSync();
+  // Si ya tenemos el link corto cacheado (precalcularShortUrl corrió al
+  // abrir la pestaña Compartir), lo usamos para que el QR sea más chico
+  // y fácil de escanear. Si no, usamos el largo (también funciona).
+  const url = obtenerShortUrlCacheado(longUrl);
   let svgQR = null;
   for (const ec of ['M', 'L']) {
     try {
@@ -264,6 +268,9 @@ const mostrarQRSync = () => {
   modalQRData = { svg: svgQR, nombre, url };
   modalQRVisible = true;
   render();
+  // Si todavía no estaba acortado, lo disparamos en background para que
+  // la próxima vez el QR salga con link corto.
+  if (url === longUrl) acortarUrl(longUrl).catch(() => {});
 };
 
 const cerrarModalQR = () => {
@@ -1891,37 +1898,66 @@ const compartirCodigo = () => {
 };
 
 // ====== ACORTADOR DE URL ======
-// Usamos cleanuri.com (free, sin API key, con CORS habilitado). is.gd no
-// sirve desde browser porque no manda Access-Control-Allow-Origin.
-// La contra: cleanuri guarda el link largo en sus servidores. Como nuestro
-// link incluye el código AM26 con nombre + figuritas marcadas, eso queda
-// en sus logs. Lo aclaramos en "Sobre la app".
+// Cascada de servicios free, sin API key, con CORS habilitado. Se prueba
+// uno a uno en orden hasta que alguno responde. Si todos fallan,
+// devolvemos la URL larga (que sigue siendo funcional, sólo más fea).
 //
-// Estrategia: pre-acortamos en background cuando el usuario abre la
-// pestaña Compartir y cacheamos. Cuando hace click en "Compartir", si
-// el cache no está listo, abrimos un placeholder window y esperamos.
+// 1) TinyURL: el más estable y conocido. GET → texto plano con la URL
+//    corta. Existe desde 2002 y nunca dio downtime relevante.
+// 2) is.gd: backup. GET → JSON con `shorturl`. Maneja errores con
+//    `errorcode`.
+// 3) da.gd: terciario, mínimo. GET → texto plano.
+//
+// Todos guardan el link largo en sus servidores (incluye el código AM26
+// con nombre + figuritas marcadas). Lo aclaramos en "Sobre la app".
+//
+// Estrategia de cache: pre-acortamos en background cuando el usuario
+// abre la pestaña Compartir. Cuando hace click en "Compartir" o copia
+// el link, el cache ya está listo. El QR también se beneficia: si la
+// pestaña se abrió antes, el QR se genera con el link corto (QR más
+// chico, más fácil de escanear).
 let _shortUrlCache = null;
 let _lastLongUrl = null;
 let _shorteningInFlight = false;
+
+const _shortenViaTinyUrl = async (longUrl) => {
+  const r = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl));
+  if (!r || !r.ok) return null;
+  const txt = (await r.text()).trim();
+  if (!txt || !/^https?:\/\//.test(txt) || /error/i.test(txt)) return null;
+  return txt;
+};
+
+const _shortenViaIsGd = async (longUrl) => {
+  const r = await fetch('https://is.gd/create.php?format=json&url=' + encodeURIComponent(longUrl));
+  if (!r || !r.ok) return null;
+  const data = await r.json();
+  if (!data || data.errorcode) return null;
+  if (typeof data.shorturl !== 'string' || !/^https?:\/\//.test(data.shorturl)) return null;
+  return data.shorturl;
+};
+
+const _shortenViaDaGd = async (longUrl) => {
+  const r = await fetch('https://da.gd/s?url=' + encodeURIComponent(longUrl));
+  if (!r || !r.ok) return null;
+  const txt = (await r.text()).trim();
+  if (!txt || !/^https?:\/\//.test(txt)) return null;
+  return txt;
+};
+
+const _SHORTENERS = [_shortenViaTinyUrl, _shortenViaIsGd, _shortenViaDaGd];
 
 const acortarUrl = async (longUrl) => {
   if (longUrl === _lastLongUrl && _shortUrlCache) return _shortUrlCache;
   _lastLongUrl = longUrl;
   _shortUrlCache = null;
   _shorteningInFlight = true;
-  try {
-    const r = await fetch('https://cleanuri.com/api/v1/shorten', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'url=' + encodeURIComponent(longUrl),
-    });
-    if (r && r.ok) {
-      const data = await r.json();
-      if (data && typeof data.result_url === 'string' && data.result_url.startsWith('http')) {
-        _shortUrlCache = data.result_url;
-      }
-    }
-  } catch (e) {}
+  for (const svc of _SHORTENERS) {
+    try {
+      const res = await svc(longUrl);
+      if (res) { _shortUrlCache = res; break; }
+    } catch (e) { /* probamos el siguiente */ }
+  }
   _shorteningInFlight = false;
   return _shortUrlCache || longUrl;
 };
@@ -3301,11 +3337,11 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.13" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.14" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ ¡Cambiemos figuritas!</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">Abre este link y mirá que figuritas podemos intercambiar!</div>
-            <div class="text-[10px] text-gray-400 mt-1">cleanuri · rundes.github.io</div>
+            <div class="text-[10px] text-gray-400 mt-1">tinyurl · rundes.github.io</div>
           </div>
         </div>
       </div>
@@ -3377,7 +3413,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.13" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.14" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3502,7 +3538,7 @@ const renderTabAmigos = () => {
         <li>💾 <strong>Hacé backup seguido.</strong> Si formateás el celular, cambiás de navegador o borrás los datos, se pierde todo.</li>
         <li>🤝 <strong>Sin cuentas, sin contraseñas.</strong> Cada uno tiene su propia copia y se comparten códigos por WhatsApp.</li>
         <li>📊 <strong>Visitas anónimas con <a href="https://www.goatcounter.com/help/privacy" target="_blank" rel="noopener noreferrer" class="underline">GoatCounter</a>.</strong> Solo contamos cuántas veces se abre la app, sin cookies y sin saber quién sos. No se guarda IP completa ni nada que te identifique.</li>
-        <li>🔗 <strong>Links cortos con <a href="https://cleanuri.com/privacy" target="_blank" rel="noopener noreferrer" class="underline">is.gd</a>.</strong> Cuando mandás tu álbum, acortamos el link via is.gd. Eso significa que el link largo (con tu nombre y figuritas codificadas) queda en sus servidores. Es un servicio gratuito y conocido pero técnicamente esa data sale del navegador.</li>
+        <li>🔗 <strong>Links cortos con TinyURL, is.gd o da.gd.</strong> Cuando mandás tu álbum, acortamos el link probando primero <a href="https://tinyurl.com/" target="_blank" rel="noopener noreferrer" class="underline">tinyurl.com</a>; si falla intentamos <a href="https://is.gd/" target="_blank" rel="noopener noreferrer" class="underline">is.gd</a> y luego <a href="https://da.gd/" target="_blank" rel="noopener noreferrer" class="underline">da.gd</a>. Eso significa que el link largo (con tu nombre y figuritas codificadas) queda en los servidores del servicio que respondió. Son gratis y conocidos pero técnicamente esa data sale del navegador.</li>
       </ul>
       <p class="text-[10px] text-gray-400 mt-3">Versión ${APP_VERSION} (${APP_BUILD}) · Mundial 2026 · Hecho con cariño para coleccionistas.</p>
     </div>
@@ -3655,7 +3691,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.13" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.14" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
