@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.9.13 — 2026-05-18 — Nuevo copy de la caja de compartir
+
+### Cambio
+- La caja **"Compartir mi álbum"** (pestaña Compartir → Paso 2 ·
+  Mandar mi lista) pasa a tener un copy más directo y de invitación
+  al intercambio:
+  - Antes: `Pasale mi álbum a un amigo` + un párrafo largo explicando
+    qué genera el botón.
+  - Ahora: `¡Cambiemos figuritas!` + descripción `Abre este link y
+    mirá que figuritas podemos intercambiar!`
+- Lo mismo se aplica al **preview mock** que muestra cómo se ve el
+  link cuando se comparte, y a los **meta tags Open Graph y Twitter
+  Cards** — así cuando alguien recibe el link en WhatsApp,
+  Telegram, Twitter, etc. ve exactamente:
+  - Título: `⚽ ¡Cambiemos figuritas!`
+  - Descripción: `Abre este link y mirá que figuritas podemos intercambiar!`
+- El copy del UI box y del unfurl en redes quedan consistentes para
+  que el usuario sepa exactamente qué va a ver el receptor.
+
+### Infra
+- Cache busting `?v=1.9.13` y `CACHE_VERSION = 'album-2026-v1.9.13'`.
+
 ## v1.9.12 — 2026-05-18 — Match sin "(xN)" — solo el número
 
 ### Cambio
