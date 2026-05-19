@@ -1,5 +1,34 @@
 # Changelog
 
+## v1.9.17 — 2026-05-18 — Soporte para mensajes de "Figuritas App" (figuritas.app)
+
+### Nuevo
+- Ahora el importador detecta y parsea mensajes de **Figuritas App**
+  (figuritas.app), una segunda app de figuritas además de Figuri.
+- Los dos formatos conviven en el mismo parser sin que el usuario tenga
+  que indicar de dónde viene:
+  - **Figuri** (original): `🇲🇽 MEX: 1, 2, 3` (bandera *antes* del
+    code) + FWC y CC con paréntesis (`Tournament (FWC): 1, 2, 3`,
+    `(CC): 1, 2`).
+  - **Figuritas App** (nuevo): `MEX 🇲🇽: 6, 10` (code *antes* de la
+    bandera) + FWC y CC sin paréntesis y con emojis intercalados
+    (`FWC 🌎: 7`, `FWC 📜: 9, 11`, `CC 🥤: 1, 2`).
+- El parser se generalizó: busca el código (`FWC`, `CC` o equipo de
+  3 letras) en el lado izquierdo del primer `:` de cada línea, sin
+  importar si hay banderas o emojis decorativos rodeándolo. Soporta
+  además líneas duplicadas de FWC (cuando una app divide los
+  especiales en sub-listas) — el `Set` deduplica.
+
+### UI
+- Lista de formatos aceptados actualizada: incluye Figuritas App
+  junto a Figuri en el cuadro "Agregar manualmente".
+- Mensajes de error y prompt ya no mencionan "Figuri" específicamente
+  (decían "No pude leer ese mensaje de Figuri" → ahora "No pude leer
+  ese mensaje"). El prompt de nombre tampoco asume la app de origen.
+
+### Infra
+- Cache busting `?v=1.9.17` y `CACHE_VERSION = 'album-2026-v1.9.17'`.
+
 ## v1.9.16 — 2026-05-18 — Forzar siempre el short URL al compartir
 
 ### Fix
