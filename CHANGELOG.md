@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.9.19 — 2026-05-18 — Confirmación antes de desmarcar figuritas
+
+### Cambio
+- Al **tocar una figurita que ya está marcada** ahora la app pide
+  confirmación antes de desmarcarla:
+  > ¿Desmarcar Argentina nº 5? Va a volver a aparecer como "no la
+  > tengo".
+- Mismo flow para FWC (`FWC nº 8`), Coca-Cola (`Coca-Cola nº 2`),
+  Doble cero (`la tapa holográfica (00)`).
+- Marcar una figurita nueva (que no estaba marcada) sigue siendo
+  un toque directo sin confirmación.
+- El botón **"Desmarcar todas"** en un equipo completo también pide
+  confirmación: desmarcar 20 figuritas de golpe sin querer es feo.
+
+### Por qué
+- Reportado: el caso común es un toque accidental al hacer scroll o
+  navegar — desmarcar una figurita pegada sin darse cuenta es muy
+  fácil y muy difícil de notar después.
+- El confirm explícito agrega una fricción mínima (1 tap más) solo
+  en la dirección "destructiva" del toggle.
+
+### Infra
+- Helper nuevo `nombreLegibleFigurita(id)` que mapea `ARG5` →
+  `Argentina nº 5` para los mensajes de confirmación.
+- Cache busting `?v=1.9.19` y `CACHE_VERSION = 'album-2026-v1.9.19'`.
+
 ## v1.9.18 — 2026-05-18 — Amigos colapsables + multi-import + backup transparente
 
 ### Cards de amigos colapsables

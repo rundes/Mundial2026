@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ ¡Cambiemos figuritas!">
 <meta property="og:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.18">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.18">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.19">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.19">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ ¡Cambiemos figuritas!">
 <meta name="twitter:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.18">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.19">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.18">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.18">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.18">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.18">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.19">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.19">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.19">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.19">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.18';
+const APP_VERSION = '1.9.19';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -1022,8 +1022,26 @@ const calcularMatch = (amigoData) => {
 
 // ====== ACCIONES ======
 
+// Nombre legible de una figurita para mensajes de confirmación.
+// Ej: 'ARG5' → 'Argentina nº 5', 'FWC8' → 'FWC nº 8', '00' → 'la tapa (00)'.
+const nombreLegibleFigurita = (id) => {
+  if (id === DOBLE_CERO_ID) return 'la tapa holográfica (00)';
+  const m = id.match(/^([A-Z]+)(\d+)$/);
+  if (!m) return id;
+  const code = m[1];
+  const num = m[2];
+  if (code === 'FWC') return `FWC nº ${num}`;
+  if (code === 'CC') return `Coca-Cola nº ${num}`;
+  const eq = todosLosEquipos.find(e => e.code === code);
+  return eq ? `${eq.nombre} nº ${num}` : id;
+};
+
 const toggle = (id) => {
   if (marcadas.has(id)) {
+    // Pedimos confirmación al DESMARCAR — el caso común es un toque
+    // accidental al hacer scroll, y desmarcar una figurita pegada
+    // sin querer es difícil de notar después.
+    if (!confirm(`¿Desmarcar ${nombreLegibleFigurita(id)}?\n\nVa a volver a aparecer como "no la tengo".`)) return;
     marcadas.delete(id);
   } else {
     marcadas.add(id);
@@ -1072,6 +1090,13 @@ const restarRepe = (id) => {
 const marcarEquipo = (code) => {
   let todas = true;
   for (let i = 1; i <= FIGURITAS; i++) if (!marcadas.has(`${code}${i}`)) { todas = false; break; }
+  // Si las 20 ya están marcadas y el usuario tocó "Desmarcar todas", pedimos
+  // confirmación: desmarcar 20 figuritas de golpe sin querer es feo.
+  if (todas) {
+    const eq = todosLosEquipos.find(e => e.code === code);
+    const nombreEquipo = eq ? eq.nombre : code;
+    if (!confirm(`¿Desmarcar las 20 figuritas de ${nombreEquipo}?\n\nVan a aparecer todas como "no las tengo".`)) return;
+  }
   for (let i = 1; i <= FIGURITAS; i++) {
     if (todas) marcadas.delete(`${code}${i}`);
     else marcadas.add(`${code}${i}`);
@@ -3432,7 +3457,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.18" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.19" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ ¡Cambiemos figuritas!</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">Abre este link y mirá que figuritas podemos intercambiar!</div>
@@ -3510,7 +3535,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.18" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.19" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3788,7 +3813,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.18" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.19" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
