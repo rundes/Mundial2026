@@ -1,5 +1,42 @@
 # Changelog
 
+## v1.9.16 — 2026-05-18 — Forzar siempre el short URL al compartir
+
+### Fix
+- **Causa real del bug de "figuritas perdidas al importar":** WhatsApp,
+  al pegar el link sin acortar, pone un botón **"Leer más"** para
+  colapsar el mensaje porque el AM26 codificado en la URL larga lleva
+  varios miles de caracteres. El receptor ve solo el comienzo del
+  mensaje, y cuando hace click en el link visible (truncado),
+  importa solo la parte que entró en la versión cortada → su app
+  decodifica un álbum incompleto y aparecen "figuritas que se
+  pierden".
+
+### Cambio
+- **`compartirAlbumPorLink` y `copiarLinkAlbum` ahora bloquean si no
+  se pudo acortar.** Ya no caen al URL largo. Si el cache del
+  shortener no está listo, mostramos un overlay "Preparando tu
+  link…" y esperamos. Si los 3 servicios (TinyURL → is.gd → da.gd)
+  fallan, alertamos:
+  > "No pudimos generar el link corto. Probá de nuevo en unos
+  > segundos. Sin acortador, el link queda tan largo que WhatsApp
+  > lo trunca con 'Leer más' y al receptor le importa un álbum
+  > incompleto."
+- **Timeout por servicio (AbortController, 5 s)**: si TinyURL
+  cuelga, no se queda esperando 30 s antes de probar el siguiente —
+  aborta a los 5 s y pasa al fallback. Cobertura total ≤ 15 s.
+
+### Limpieza
+- Eliminado el hack de **ventana placeholder en desktop** que
+  abría `about:blank` durante el gesto del usuario y la
+  redirigía a `wa.me` con el long URL si el shortener fallaba.
+  Como ahora no usamos el long URL nunca, ese hack quedó sin
+  función.
+
+### Infra
+- Estado nuevo `compartirEnProgreso` + overlay modal con z-50.
+- Cache busting `?v=1.9.16` y `CACHE_VERSION = 'album-2026-v1.9.16'`.
+
 ## v1.9.15 — 2026-05-18 — Pegar el link de compartir en "Agregar manualmente"
 
 ### Cambio

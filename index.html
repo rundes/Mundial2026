@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ ¡Cambiemos figuritas!">
 <meta property="og:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.15">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.15">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.16">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.16">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ ¡Cambiemos figuritas!">
 <meta name="twitter:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.15">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.16">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.15">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.15">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.15">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.15">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.16">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.16">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.16">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.16">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.15';
+const APP_VERSION = '1.9.16';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -227,6 +227,10 @@ const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
 let modalQRVisible = false;
 let modalQRData = null;
+// Overlay "Preparando link…" mientras esperamos al acortador. Sin link
+// corto no compartimos: con URL larga WhatsApp pone "Leer más" y trunca
+// el mensaje, lo que rompe el import del receptor.
+let compartirEnProgreso = false;
 
 const generarUrlSync = () => {
   const codigo = codificarEstado(miNombre || 'amigo', marcadas, repetidas);
@@ -1933,8 +1937,19 @@ let _shortUrlCache = null;
 let _lastLongUrl = null;
 let _shorteningInFlight = false;
 
+// Helper: fetch con timeout por servicio (AbortController). Evita que un
+// shortener colgado bloquee la cadena entera.
+const _fetchConTimeout = (url, opts, ms) => {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => { try { ctrl.abort(); } catch (e) {} }, ms);
+  return fetch(url, { ...(opts || {}), signal: ctrl.signal })
+    .finally(() => clearTimeout(timer));
+};
+
+const _SHORTENER_TIMEOUT_MS = 5000;
+
 const _shortenViaTinyUrl = async (longUrl) => {
-  const r = await fetch('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl));
+  const r = await _fetchConTimeout('https://tinyurl.com/api-create.php?url=' + encodeURIComponent(longUrl), {}, _SHORTENER_TIMEOUT_MS);
   if (!r || !r.ok) return null;
   const txt = (await r.text()).trim();
   if (!txt || !/^https?:\/\//.test(txt) || /error/i.test(txt)) return null;
@@ -1942,7 +1957,7 @@ const _shortenViaTinyUrl = async (longUrl) => {
 };
 
 const _shortenViaIsGd = async (longUrl) => {
-  const r = await fetch('https://is.gd/create.php?format=json&url=' + encodeURIComponent(longUrl));
+  const r = await _fetchConTimeout('https://is.gd/create.php?format=json&url=' + encodeURIComponent(longUrl), {}, _SHORTENER_TIMEOUT_MS);
   if (!r || !r.ok) return null;
   const data = await r.json();
   if (!data || data.errorcode) return null;
@@ -1951,7 +1966,7 @@ const _shortenViaIsGd = async (longUrl) => {
 };
 
 const _shortenViaDaGd = async (longUrl) => {
-  const r = await fetch('https://da.gd/s?url=' + encodeURIComponent(longUrl));
+  const r = await _fetchConTimeout('https://da.gd/s?url=' + encodeURIComponent(longUrl), {}, _SHORTENER_TIMEOUT_MS);
   if (!r || !r.ok) return null;
   const txt = (await r.text()).trim();
   if (!txt || !/^https?:\/\//.test(txt)) return null;
@@ -2066,135 +2081,103 @@ const construirMensajeAlbum = (link) => {
   return txt;
 };
 
-const compartirAlbumPorLink = () => {
-  const nombre = (miNombre || '').trim();
-  if (!nombre) {
-    alert('Antes escribí tu nombre arriba (Paso 1 · "¿Cómo te llamás?").');
-    return;
-  }
-  const longUrl = generarUrlSync();
-  const cached = obtenerShortUrlCacheado(longUrl);
-
-  // Caso 1: ya tenemos el short en cache → todo sincrónico
-  if (cached !== longUrl) {
-    const txt = construirMensajeAlbum(cached);
-    compartirWhatsApp(txt);
-    return;
-  }
-
-  // Caso 2: no hay cache. En WebView o en cualquier mobile (Android/iOS),
-  // NO usamos el hack de ventana placeholder. Razones:
-  // - El placeholder se usaba para mantener el gesto del usuario y poder
-  //   navegar a wa.me con el shortener resuelto. Pero en mobile compartirWhatsApp
-  //   ahora usa `whatsapp://send?text=...` (protocolo custom, no requiere
-  //   tab nueva), así que el placeholder es innecesario.
-  // - Peor aún: el hack terminaba navegando esa ventana a wa.me, que para
-  //   mensajes largos corrompe los emojis al hacer el redirect a
-  //   api.whatsapp.com/send (aparecen como `�`).
-  // Esperamos el shortener inline (con timeout corto por si la API se
-  // cuelga) y mandamos por compartirWhatsApp.
-  const ua = (navigator && navigator.userAgent) || '';
-  const esMobileShare = /Android|iPhone|iPad|iPod/i.test(ua);
-  if (WEBVIEW_INFO.esWebView || esMobileShare) {
-    Promise.race([
-      acortarUrl(longUrl),
-      new Promise((resolve) => setTimeout(() => resolve(longUrl), 2000)),
-    ]).then((url) => {
-      const txt = construirMensajeAlbum(url);
-      compartirWhatsApp(txt);
-    });
-    return;
-  }
-
-  // Caso 3 (desktop): no hay cache, abrimos una ventana placeholder DENTRO
-  // del gesto del usuario y la redirigimos a wa.me cuando llega el short URL.
-  let win = null;
-  try { win = window.open('about:blank', '_blank'); } catch (e) {}
-
-  if (!win) {
-    // El navegador bloqueó la ventana. Mandamos con URL larga al toque
-    // (no perdemos el gesto). El shortener queda corriendo en background
-    // para la próxima vez.
-    acortarUrl(longUrl).catch(() => {});
-    const txt = construirMensajeAlbum(longUrl);
-    compartirWhatsApp(txt);
-    return;
-  }
-
-  // Pantalla de "preparando..." en la ventana abierta
-  try {
-    win.document.write('<!doctype html><html><head><title>Preparando link...</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#444;background:#f8f8f8;text-align:center;padding:20px"><div><div style="font-size:24px;margin-bottom:8px">⚽</div><div>Preparando link corto…</div></div></body></html>');
-  } catch (e) {}
-
-  acortarUrl(longUrl)
-    .then((url) => {
-      const txt = construirMensajeAlbum(url);
-      const waUrl = 'https://wa.me/?text=' + encodeURIComponent(txt);
-      try { win.location.href = waUrl; }
-      catch (e) { try { win.close(); } catch (e2) {} compartirWhatsApp(txt); }
-    })
-    .catch(() => {
-      const txt = construirMensajeAlbum(longUrl);
-      const waUrl = 'https://wa.me/?text=' + encodeURIComponent(txt);
-      try { win.location.href = waUrl; }
-      catch (e) { try { win.close(); } catch (e2) {} compartirWhatsApp(txt); }
-    });
+// Si el shortener falló por completo (los 3 servicios timed out / down)
+// alertamos en vez de mandar la URL larga. La razón: WhatsApp, al pegar
+// el mensaje con el link largo (varios miles de caracteres porque el
+// AM26 lleva el álbum entero codificado), pone un "Leer más" y trunca
+// el mensaje. Al receptor le llega un URL incompleto y el import
+// decodifica solo parte del álbum (figuritas que se pierden).
+const _avisarShortFallo = () => {
+  alert('No pudimos generar el link corto.\n\nProbá de nuevo en unos segundos. Sin acortador, el link queda tan largo que WhatsApp lo trunca con "Leer más" y al receptor le importa un álbum incompleto.');
 };
 
-const copiarLinkAlbum = () => {
+const compartirAlbumPorLink = async () => {
   const nombre = (miNombre || '').trim();
   if (!nombre) {
     alert('Antes escribí tu nombre arriba (Paso 1 · "¿Cómo te llamás?").');
     return;
   }
   const longUrl = generarUrlSync();
-  const cached = obtenerShortUrlCacheado(longUrl);
+  let url = obtenerShortUrlCacheado(longUrl);
 
-  // Helper que pega el link al portapapeles. Copia SOLO la URL (sin
-  // mensaje ni encabezado): el botón dice "Solo copiar el link corto",
-  // así que respetamos esa expectativa. Si el usuario quiere mandar el
-  // mensaje completo, tiene el botón "Mandar por WhatsApp" arriba.
-  const ejecutarCopia = (url) => {
-    const contenido = url;
-    let copiado = false;
+  // Si no hay cache, mostramos overlay y esperamos al acortador.
+  if (url === longUrl) {
+    compartirEnProgreso = true;
+    render();
     try {
-      const ta = document.createElement('textarea');
-      ta.value = contenido;
-      ta.setAttribute('readonly', '');
-      ta.style.position = 'fixed';
-      ta.style.top = '0';
-      ta.style.left = '0';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.contentEditable = 'true';
-      ta.readOnly = false;
-      const range = document.createRange();
-      range.selectNodeContents(ta);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      ta.setSelectionRange(0, 999999);
-      copiado = document.execCommand('copy');
-      document.body.removeChild(ta);
-    } catch (e) {}
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(contenido).catch(() => {});
-    }
-    if (copiado) {
-      setTimeout(() => alert('✅ Link copiado al portapapeles.\n\nPegalo en cualquier chat. Cuando hagan click, se les carga tu álbum.'), 50);
-    } else {
-      window.prompt('Tocá y mantené apretado el texto para copiarlo:', contenido);
-    }
-  };
+      url = await acortarUrl(longUrl);
+    } catch (e) { url = longUrl; }
+    compartirEnProgreso = false;
+    render();
 
-  // Si hay short en cache, copiamos al toque
-  if (cached !== longUrl) {
-    ejecutarCopia(cached);
-    return;
+    // El shortener no respondió ni siquiera por fallback → no compartimos.
+    if (url === longUrl) {
+      _avisarShortFallo();
+      return;
+    }
   }
 
-  // Sin cache: intentamos acortar antes de copiar
-  acortarUrl(longUrl).then((url) => ejecutarCopia(url)).catch(() => ejecutarCopia(longUrl));
+  const txt = construirMensajeAlbum(url);
+  compartirWhatsApp(txt);
+};
+
+const copiarLinkAlbum = async () => {
+  const nombre = (miNombre || '').trim();
+  if (!nombre) {
+    alert('Antes escribí tu nombre arriba (Paso 1 · "¿Cómo te llamás?").');
+    return;
+  }
+  const longUrl = generarUrlSync();
+  let url = obtenerShortUrlCacheado(longUrl);
+
+  // Si no hay cache, esperamos al acortador (con overlay) antes de copiar.
+  // Si los 3 servicios fallan, alertamos y NO copiamos el link largo: si
+  // el usuario lo pegara en WhatsApp se truncaría con "Leer más" y al
+  // receptor le importa un álbum incompleto.
+  if (url === longUrl) {
+    compartirEnProgreso = true;
+    render();
+    try { url = await acortarUrl(longUrl); } catch (e) { url = longUrl; }
+    compartirEnProgreso = false;
+    render();
+
+    if (url === longUrl) {
+      _avisarShortFallo();
+      return;
+    }
+  }
+
+  // Copia al portapapeles: solo el URL, sin encabezado.
+  const contenido = url;
+  let copiado = false;
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = contenido;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.contentEditable = 'true';
+    ta.readOnly = false;
+    const range = document.createRange();
+    range.selectNodeContents(ta);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    ta.setSelectionRange(0, 999999);
+    copiado = document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (e) {}
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(contenido).catch(() => {});
+  }
+  if (copiado) {
+    setTimeout(() => alert('✅ Link copiado al portapapeles.\n\nPegalo en cualquier chat. Cuando hagan click, se les carga tu álbum.'), 50);
+  } else {
+    window.prompt('Tocá y mantené apretado el texto para copiarlo:', contenido);
+  }
 };
 
 const compartirSoloCodigo = () => {
@@ -3350,7 +3333,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.15" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.16" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ ¡Cambiemos figuritas!</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">Abre este link y mirá que figuritas podemos intercambiar!</div>
@@ -3427,7 +3410,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.15" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.16" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3705,7 +3688,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.15" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.16" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
@@ -3725,6 +3708,16 @@ function render() {
     ${renderFabSheet()}
     ${renderToastLogro()}
     ${renderModalLogros()}
+
+    ${compartirEnProgreso ? `
+    <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" data-action="noop">
+      <div class="bg-white rounded-2xl p-6 max-w-xs w-full shadow-xl text-center">
+        <div class="text-3xl mb-2" aria-hidden="true">⚽</div>
+        <div class="text-base font-semibold text-gray-900 mb-1">Preparando tu link…</div>
+        <div class="text-xs text-gray-500 leading-snug">Esperá un toque mientras lo acortamos. Sin acortar, WhatsApp recorta el mensaje y se pierden figuritas.</div>
+      </div>
+    </div>
+    ` : ''}
 
     ${modalQRVisible && modalQRData ? `
     <div class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto" data-action="cerrar-qr">
