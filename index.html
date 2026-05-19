@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ Mi Álbum Mundial 2026 — gratis, sin registro">
 <meta property="og:description" content="Llevá el control de tu álbum del Mundial 2026: marcá las que tenés, anotá tus repes y coordiná intercambios por WhatsApp. Todo en tu propio celular.">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.9">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.9">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.10">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.10">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ Mi Álbum Mundial 2026">
 <meta name="twitter:description" content="App gratis para llevar tu álbum del Mundial 2026: marcá las que tenés, anotá tus repes y coordiná cambios por WhatsApp.">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.9">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.10">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.9">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.9">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.9">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.9">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.10">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.10">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.10">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.10">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.9';
+const APP_VERSION = '1.9.10';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -957,23 +957,35 @@ const faltantesEquipo = (code) => {
   return f;
 };
 
-// Calcula coincidencias con un amigo
+// Calcula coincidencias con un amigo.
+//
+// Importante: cada intercambio es 1-a-1 por figurita. Aunque yo tenga 2 o
+// 3 repes de la misma figurita, al amigo le sirve UNA sola (la pega y ya).
+// Por eso `cant` SIEMPRE es 1 en el match — no es la cantidad que tengo,
+// es la cantidad útil para el intercambio. Antes se ponía la cantidad
+// total de repes, lo que hacía que el "Le doy / Me da" contara dos veces
+// las figuritas que cualquiera de los dos tuviera duplicadas (totalLeDoy
+// sumaba x.cant que podía ser 2 o más, inflando el resultado).
 const calcularMatch = (amigoData) => {
-  // Yo tengo repe → amigo no tiene → "le doy"
-  // Yo no tengo → amigo tiene repe → "me da"
-  const leDoy = []; // {id, cant}
-  const meDa = [];  // {id}
+  // Yo tengo repe → amigo no tiene → "le doy" (1 copia útil para él)
+  // Yo no tengo → amigo tiene repe → "me da" (1 copia útil para mí)
+  const leDoy = []; // {id, cant: 1, tengo: <total mío>}
+  const meDa = [];  // {id, cant: 1, tiene: <total del amigo>}
 
   ORDEN_FIGURITAS.forEach(id => {
-    const tengoRepe = (repetidas[id] || 0) > 0;
+    const misRepes = repetidas[id] || 0;
+    const repesAmigo = amigoData.repes[id] || 0;
+    const tengoRepe = misRepes > 0;
     const amigoLaTiene = amigoData.tengo.has(id);
-    const amigoTieneRepe = (amigoData.repes[id] || 0) > 0;
+    const amigoTieneRepe = repesAmigo > 0;
 
     if (tengoRepe && !amigoLaTiene) {
-      leDoy.push({ id, cant: repetidas[id] });
+      // `tengo` es informativo: cuántas me sobran (por si quiero recordar
+      // que tengo varias para otros amigos). `cant` es el intercambio.
+      leDoy.push({ id, cant: 1, tengo: misRepes });
     }
     if (!marcadas.has(id) && amigoTieneRepe) {
-      meDa.push({ id, cant: amigoData.repes[id] });
+      meDa.push({ id, cant: 1, tiene: repesAmigo });
     }
   });
 
@@ -2190,8 +2202,10 @@ const compartirMatchPorWpp = (nombreAmigo, match) => {
 
   if (match.leDoy.length > 0) {
     txt += `🎁 Te puedo dar (yo las tengo repetidas, vos no las tenés):\n`;
-    match.leDoy.forEach(({id, cant}) => {
-      txt += `• ${id}${cant > 1 ? ` (tengo ${cant})` : ''}\n`;
+    match.leDoy.forEach(({id, tengo}) => {
+      // El intercambio es 1 copia; "tengo N" es info por si tengo varias
+      // para usar con otros amigos.
+      txt += `• ${id}${tengo > 1 ? ` (tengo ${tengo})` : ''}\n`;
     });
   } else {
     txt += `(no tengo repes que te sirvan ahora)\n`;
@@ -2201,8 +2215,8 @@ const compartirMatchPorWpp = (nombreAmigo, match) => {
 
   if (match.meDa.length > 0) {
     txt += `🙏 ¿Me das? (vos tenés repetidas, yo no las tengo):\n`;
-    match.meDa.forEach(({id, cant}) => {
-      txt += `• ${id}${cant > 1 ? ` (tenés ${cant})` : ''}\n`;
+    match.meDa.forEach(({id, tiene}) => {
+      txt += `• ${id}${tiene > 1 ? ` (tenés ${tiene})` : ''}\n`;
     });
   } else {
     txt += `(no encontré repes tuyas que me sirvan)\n`;
@@ -3141,20 +3155,22 @@ const renderTabAmigos = () => {
         repes: a.repetidas || {},
       };
       const match = calcularMatch(amigoData);
-      const totalLeDoy = match.leDoy.reduce((s, x) => s + x.cant, 0);
       const totalLeDoyUnicas = match.leDoy.length;
       const totalMeDa = match.meDa.length;
 
-      // Renderizar listas agrupadas por equipo
+      // Renderizar listas agrupadas por equipo. `cant` siempre es 1 (un
+      // intercambio por figurita) — el dato útil para mostrar es `spare`:
+      // cuántas copias tenemos disponibles (yo o el amigo) por si hay
+      // varias para distribuir.
       const agrupar = (items) => {
         const porEq = {};
-        items.forEach(({id, cant}) => {
-          // separar prefijo y número
+        items.forEach(({id, tengo, tiene}) => {
           const m = id.match(/^([A-Z]+)(\d+)$/);
           if (!m) return;
           const [_, code, nStr] = m;
           if (!porEq[code]) porEq[code] = [];
-          porEq[code].push({ n: parseInt(nStr, 10), cant });
+          const spare = tengo || tiene || 1;
+          porEq[code].push({ n: parseInt(nStr, 10), spare });
         });
         return porEq;
       };
@@ -3173,7 +3189,9 @@ const renderTabAmigos = () => {
         let html = '';
         Object.entries(porEq).forEach(([code, nums]) => {
           const info = eqInfo(code);
-          const txt = nums.map(x => x.cant > 1 ? `${x.n}(x${x.cant})` : `${x.n}`).join(', ');
+          // `(x N)` muestra cuántas copias hay disponibles (info), no
+          // cuántas se intercambian (siempre 1).
+          const txt = nums.map(x => x.spare > 1 ? `${x.n}(x${x.spare})` : `${x.n}`).join(', ');
           html += `<div class="flex gap-2 text-xs py-1">
             <span class="inline-block w-2 h-2 rounded-full mt-1 shrink-0" style="background-color: ${info.color}"></span>
             <span class="font-semibold text-gray-900 w-28 shrink-0 truncate">${escapeHtml(info.nombre)}</span>
@@ -3284,7 +3302,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.9" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.10" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3360,7 +3378,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.9" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.10" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3638,7 +3656,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.9" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.10" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>

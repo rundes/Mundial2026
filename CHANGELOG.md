@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.9.10 — 2026-05-18 — Fix: no contar dos veces los intercambios con repes ≥ 2
+
+### Bug
+- En el match de coincidencias con un amigo, si yo (o el amigo) tenía
+  2 o más repetidas de la misma figurita, el intercambio se contaba
+  duplicado. `calcularMatch` ponía `cant: repetidas[id]` (la cantidad
+  total que tengo) en cada entrada, y el código de totales hacía
+  `match.leDoy.reduce((s, x) => s + x.cant, 0)`, sumando 2 (o más) por
+  cada figurita con repes duplicadas. También el display mostraba
+  "te puedo dar ARG5 (x2)", sugiriendo intercambiar 2 cuando el
+  amigo solo necesita 1 para pegar.
+
+### Fix
+- `calcularMatch` ahora pone **`cant: 1` siempre** — cada intercambio
+  es 1-a-1 por figurita, porque al amigo solo le sirve una copia para
+  pegar en el álbum, no importa cuántas yo tenga repetidas.
+- Para no perder la info "tengo 2 spares" (que sirve para distribuir
+  con varios amigos), se agregaron dos campos nuevos:
+  - `tengo` en `leDoy`: cuántas repes tengo yo de esa figurita.
+  - `tiene` en `meDa`: cuántas repes tiene el amigo de esa figurita.
+- Los displays (mensaje de WhatsApp del match, card del amigo) ahora
+  usan `tengo`/`tiene` para el "(xN)" / "(tengo N)" — es info, no
+  cuenta. El badge de "Le doy / Me da" sigue mostrando la cantidad de
+  figuritas únicas a intercambiar (que es lo correcto).
+- Eliminada la variable `totalLeDoy` que ya no se usaba en ningún
+  lado y que tenía el bug de duplicación.
+
+### Infra
+- Cache busting `?v=1.9.10` y `CACHE_VERSION = 'album-2026-v1.9.10'`.
+
 ## v1.9.9 — 2026-05-18 — Buscador robusto + +/- grandes + auto-colapsar completos
 
 ### Buscador rediseñado de cero
