@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ ¡Cambiemos figuritas!">
 <meta property="og:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.24">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.24">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.25">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.25">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ ¡Cambiemos figuritas!">
 <meta name="twitter:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.24">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.25">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.24">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.24">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.24">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.24">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.25">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.25">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.25">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.25">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.24';
+const APP_VERSION = '1.9.25';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -1417,27 +1417,80 @@ const restaurarBackupDesdeArchivo = (file) => {
   reader.readAsText(file);
 };
 
+// Importa MIS DATOS (marcadas + repes) desde un mensaje de OTRA app
+// (Figuri, Figuritas App, etc.). Es el equivalente a "restaurar backup"
+// pero usando como fuente un mensaje de otra app de figuritas en vez del
+// .txt nativo. Pide confirmación porque sobrescribe el estado actual.
+// Los amigos guardados NO se tocan.
+const aplicarMisDatosDeOtraApp = (figData) => {
+  if (!figData || !(figData.marcadas instanceof Set) || !figData.repetidas) {
+    alert('❌ El mensaje no tiene datos válidos.');
+    return false;
+  }
+  const cuantas = figData.marcadas.size;
+  const cuantasRepes = Object.values(figData.repetidas).reduce((s, c) => s + (Number(c) || 0), 0);
+
+  const msg = `¿Importar este álbum como TUYO?\n\n` +
+    `Figuritas pegadas: ${cuantas}\n` +
+    `Repetidas: ${cuantasRepes}\n\n` +
+    `⚠️ Esto va a REEMPLAZAR todas las figuritas marcadas y repes que tengas ahora. ` +
+    `Tus amigos guardados NO se borran.\n\n` +
+    `Si todavía no hiciste backup de lo que tenés, cancelá y andá a Más → "Mandármelo por WhatsApp" primero.`;
+
+  if (!confirm(msg)) return false;
+
+  const validos = new Set(ORDEN_FIGURITAS);
+  marcadas = new Set();
+  for (const id of figData.marcadas) {
+    if (typeof id === 'string' && validos.has(id)) marcadas.add(id);
+  }
+  repetidas = {};
+  Object.entries(figData.repetidas).forEach(([id, c]) => {
+    const n = parseInt(c, 10);
+    if (validos.has(id) && Number.isFinite(n) && n > 0 && n < 1000) repetidas[id] = n;
+  });
+
+  marcarCambio(cuantas + cuantasRepes);
+  guardar();
+  chequearLogros();
+  render();
+  setTimeout(() => alert(`✅ Listo. Importadas ${cuantas} figuritas y ${cuantasRepes} repetidas como tuyas.`), 50);
+  return true;
+};
+
 const restaurarBackupDesdeTexto = (texto) => {
   if (!texto || !texto.trim()) {
-    alert('Pegá el contenido del backup antes de restaurar.');
+    alert('Pegá el contenido antes de restaurar.');
     return;
   }
   if (texto.length > MAX_LEN_TEXTO_BACKUP) {
     alert('❌ El texto es demasiado grande para procesarlo.');
     return;
   }
+  // 1) Backup nativo de la app (con BACKUP-INICIO / BACKUP-FIN)
   const datos = parsearTextoBackup(texto);
   if (datos) {
     aplicarBackup(datos);
     return;
   }
-  // Por si pegaron solo el JSON
+  // 2) Por si pegaron solo el JSON crudo del backup
   try {
     const datosJson = JSON.parse(texto);
-    aplicarBackup(datosJson);
-  } catch (err) {
-    alert('❌ No reconocí ese contenido como un backup válido.\n\nAsegurate de copiar el mensaje completo, incluyendo las líneas BACKUP-INICIO y BACKUP-FIN.');
+    if (datosJson && (Array.isArray(datosJson.marcadas) || datosJson.repetidas)) {
+      aplicarBackup(datosJson);
+      return;
+    }
+  } catch (err) { /* sigue al fallback de Figuri */ }
+  // 3) Mensaje de otra app (Figuri, Figuritas App, etc.) → lo importamos
+  //    como MIS datos, no como un amigo nuevo.
+  if (esMensajeFiguri(texto)) {
+    const figData = parseFiguriMessage(texto);
+    if (figData) {
+      aplicarMisDatosDeOtraApp(figData);
+      return;
+    }
   }
+  alert('❌ No reconocí ese contenido.\n\nAceptamos:\n• Backup de esta app (con líneas BACKUP-INICIO y BACKUP-FIN)\n• Mensajes de Figuri (figuri.app) o Figuritas App (figuritas.app) — se importan como tu álbum');
 };
 
 // ====== COMPARTIR LA APP ======
@@ -3590,7 +3643,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.24" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.25" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ ¡Cambiemos figuritas!</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">Abre este link y mirá que figuritas podemos intercambiar!</div>
@@ -3732,12 +3785,16 @@ const renderTabMas = () => {
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
             </svg>
-            Pegar el backup (texto)
+            Pegar backup o mensaje de otra app
           </button>
 
           <div id="bloque-restaurar-texto" class="hidden bg-white border border-emerald-200 rounded-xl p-3 mt-2">
-            <label class="text-[10px] font-bold tracking-wider text-gray-500 uppercase block mb-2">Pegá acá el mensaje completo que te enviaste</label>
-            <textarea id="input-restore-texto" rows="5" placeholder="Pegá todo el mensaje de WhatsApp (incluyendo las líneas BACKUP-INICIO y BACKUP-FIN)..."
+            <label class="text-[10px] font-bold tracking-wider text-gray-500 uppercase block mb-2">Pegá acá el mensaje completo</label>
+            <ul class="text-[11px] text-gray-600 leading-relaxed mb-2 space-y-1 pl-1">
+              <li>✅ <strong>Backup de esta app</strong> (con líneas <code class="bg-gray-100 px-1 rounded">BACKUP-INICIO</code> / <code class="bg-gray-100 px-1 rounded">BACKUP-FIN</code>)</li>
+              <li>✅ Mensaje de <strong>Figuri</strong> (figuri.app) o <strong>Figuritas App</strong> (figuritas.app) → se importa como tu álbum</li>
+            </ul>
+            <textarea id="input-restore-texto" rows="5" placeholder="Pegá acá el contenido completo del mensaje…"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-[11px] leading-relaxed focus:outline-none focus:border-emerald-500 resize-none"></textarea>
             <div class="flex gap-2 mt-2">
               <button data-action="restaurar-desde-texto" class="flex-1 bg-emerald-600 active:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl text-sm">Restaurar</button>
@@ -3747,7 +3804,7 @@ const renderTabMas = () => {
         </div>
 
         <p class="text-xs text-gray-500 mt-4 leading-relaxed">
-          El backup incluye tu nombre, las figuritas marcadas, las repetidas y los amigos guardados. <strong>Mandándotelo por WhatsApp a vos mismo</strong> queda guardado para siempre y no lo perdés aunque cambies de teléfono.
+          El backup incluye tu nombre, las figuritas marcadas, las repetidas y los amigos guardados. <strong>Mandándotelo por WhatsApp a vos mismo</strong> queda guardado para siempre y no lo perdés aunque cambies de teléfono. <strong>También podés importar tu álbum desde un mensaje de Figuri o Figuritas App</strong> usando "Pegar backup o mensaje de otra app".
         </p>
       </div>
     </div>
@@ -3773,7 +3830,7 @@ const renderTabMas = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.24" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.25" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3963,7 +4020,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.24" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.25" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>

@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.9.25 — 2026-05-19 — Importar TU álbum desde mensajes de otras apps
+
+### Nuevo
+- El botón "Pegar backup o mensaje de otra app" (Más → Copia de
+  seguridad → Restaurar) ahora también acepta **mensajes de Figuri
+  (figuri.app) y Figuritas App (figuritas.app)** además del backup
+  nativo `.txt`.
+- Reusa el mismo parser (`parseFiguriMessage`) que ya estaba
+  funcionando para importar amigos, pero esta vez **el contenido se
+  importa como TU álbum** — reemplaza tus marcadas y repes actuales,
+  no agrega un amigo nuevo.
+- Pide confirmación explícita antes de sobrescribir, mostrando
+  cuántas figuritas y repes va a importar.
+- Los amigos guardados NO se borran (solo cambia marcadas + repes).
+
+### UX
+- El botón se renombra de "Pegar el backup (texto)" a "Pegar backup
+  o mensaje de otra app" para reflejar las dos fuentes.
+- El cuadro de paste lista los formatos aceptados:
+  - ✅ Backup de esta app (con `BACKUP-INICIO` / `BACKUP-FIN`)
+  - ✅ Mensaje de Figuri o Figuritas App → se importa como tu álbum
+- La copy explica que también podés importar tu álbum desde otra
+  app si venís migrando.
+
+### Flow técnico
+- `restaurarBackupDesdeTexto` ahora tiene 3 fallbacks en cadena:
+  1. `parsearTextoBackup` → backup nativo AM26
+  2. `JSON.parse` → backup en JSON crudo
+  3. `parseFiguriMessage` → mensaje de Figuri/Figuritas App
+- Nueva función `aplicarMisDatosDeOtraApp(figData)` que sobrescribe
+  marcadas+repes con confirm, filtra IDs no válidos y reporta el
+  conteo final.
+
+### Infra
+- Cache busting `?v=1.9.25` y `CACHE_VERSION = 'album-2026-v1.9.25'`.
+
 ## v1.9.24 — 2026-05-19 — Mensajes WhatsApp más compactos (bandera + sigla)
 
 ### Cambio
