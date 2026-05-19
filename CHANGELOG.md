@@ -1,5 +1,53 @@
 # Changelog
 
+## v1.9.24 — 2026-05-19 — Mensajes WhatsApp más compactos (bandera + sigla)
+
+### Cambio
+- Los mensajes que la app arma para WhatsApp ahora usan **bandera +
+  sigla** (`🇦🇷 ARG: 5, 10`) en vez de **bandera + nombre completo**
+  (`🇦🇷 Argentina: 5, 10`). Pedido del usuario para evitar que
+  WhatsApp trunque el mensaje con "Leer más".
+- Ahorro de caracteres por línea de equipo: nombres como
+  `República Checa`, `Estados Unidos`, `Corea del Sur` pasan a 3
+  letras → ahorro de ~10-13 chars por línea. Con 30+ equipos
+  listados, ~400 chars menos en total.
+
+### Más compactación
+- **Sin separadores** `━━━━━━━━━━━━━━━━━━━━`: cada uno costaba
+  20 chars + saltos de línea. Eran 5-7 por mensaje. Total ~150 chars
+  ahorrados. El emoji + texto del título ya hace de separador visual.
+- **Sin encabezados** `▸ Grupo A`, `▸ Grupo B`...: los códigos
+  estándar (MEX, USA, ARG) son universales, agrupar por grupo no
+  agrega información práctica. ~12 líneas menos por mensaje.
+- **FWC y CC** sin descripciones largas: `FWC (estadios, mascota,
+  trofeo, pelota): 1, 2, 3` → `FWC: 1, 2, 3`. `CC (canje Coca-Cola
+  con tapitas)` → `CC`.
+- **Doble cero**: `✨ Doble cero (00 · la brillosita de la tapa)` →
+  `✨ 00`.
+- **Encabezado del mensaje** unificado: `📊 Cómo voy: 750 de 994
+  (75%)` + `🔍 Me faltan 244 · 🔄 Tengo 30 repes` → línea única
+  `📊 750/994 (75%) · faltan 244 · 30 repes`.
+
+### Impacto estimado
+- Antes: ~2500-3000 chars para un álbum a medio completar →
+  truncado por WhatsApp.
+- Después: ~1200-1500 chars para el mismo álbum → debería entrar
+  sin truncar.
+
+### Alcance
+- Aplicado a TODOS los message-builders de WhatsApp:
+  - `construirMensajeAlbum` (el "¡Cambiemos figuritas!")
+  - `compartirSoloFaltantes` (FAB · solo faltantes)
+  - `compartirSoloRepes` (FAB · solo repes)
+  - `compartirListaCompleta` (FAB · lista completa)
+  - `compartirEquipoEspecifico` (botón "Pedir las que faltan" por
+    equipo)
+- El backup .txt mantiene su formato original (no es WhatsApp,
+  funciona como archivo).
+
+### Infra
+- Cache busting `?v=1.9.24` y `CACHE_VERSION = 'album-2026-v1.9.24'`.
+
 ## v1.9.23 — 2026-05-19 — Separar pestaña "Compartir" en "Amigos" y "Más"
 
 ### Cambio

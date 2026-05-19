@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ ¡Cambiemos figuritas!">
 <meta property="og:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.23">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.23">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.24">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.24">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ ¡Cambiemos figuritas!">
 <meta name="twitter:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.23">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.24">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.23">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.23">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.23">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.23">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.24">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.24">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.24">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.24">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.23';
+const APP_VERSION = '1.9.24';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -792,9 +792,9 @@ const compartirEquipoEspecifico = (code) => {
   const firma = miNombre ? `\n\n— ${miNombre}` : '';
   let txt;
   if (faltan.length === 1) {
-    txt = `⚽ ¡Hola! Para terminar ${flagOf(code)} ${eq.nombre} en mi álbum del Mundial 2026 me falta solo:\n\n👉 La N° ${faltan[0]}\n\n¿La tenés repetida y te la puedo cambiar? 🙏${firma}`;
+    txt = `⚽ ¡Hola! Para terminar ${flagOf(code)} ${code} en mi álbum del Mundial 2026 me falta solo:\n\n👉 La N° ${faltan[0]}\n\n¿La tenés repetida y te la puedo cambiar? 🙏${firma}`;
   } else {
-    txt = `⚽ ¡Hola! Para cerrar ${flagOf(code)} ${eq.nombre} en mi álbum del Mundial 2026 me faltan estas:\n\n👉 ${faltan.join(', ')}\n\n¿Tenés alguna repetida que me sirva? 🙏${firma}`;
+    txt = `⚽ ¡Hola! Para cerrar ${flagOf(code)} ${code} en mi álbum del Mundial 2026 me faltan estas:\n\n👉 ${faltan.join(', ')}\n\n¿Tenés alguna repetida que me sirva? 🙏${firma}`;
   }
   compartirWhatsApp(txt);
 };
@@ -1484,7 +1484,7 @@ const compartirSoloFaltantes = () => {
     return;
   }
   const firma = miNombre ? `— ${miNombre}` : '';
-  let txt = `⚽ MI ÁLBUM MUNDIAL 2026\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let txt = `⚽ MI ÁLBUM MUNDIAL 2026\n\n`;
   if (firma) txt += `${firma}\n\n`;
   txt += `📊 Voy ${stats.tienen} de ${stats.total} (${stats.pct}%) · me faltan ${stats.faltan}\n\n`;
   txt += `🔍 LO QUE ME FALTA para completar:\n\n`;
@@ -1494,10 +1494,10 @@ const compartirSoloFaltantes = () => {
       const f = faltantesEquipo(eq.code);
       if (f.length > 0) {
         const estado = f.length === FIGURITAS ? 'todas (1 a 20)' : f.join(', ');
-        bloque += `${flagOf(eq.code)} ${eq.nombre}: ${estado}\n`;
+        bloque += `${flagOf(eq.code)} ${eq.code}: ${estado}\n`;
       }
     });
-    if (bloque) txt += `▸ Grupo ${letra}\n${bloque}\n`;
+    if (bloque) txt += bloque;
   }
   const fwcF = [];
   for (let i = 1; i <= FWC_TOTAL; i++) if (!marcadas.has(`FWC${i}`)) fwcF.push(i);
@@ -1506,7 +1506,7 @@ const compartirSoloFaltantes = () => {
   const faltaDC = TIENE_DOBLE_CERO && !marcadas.has(DOBLE_CERO_ID);
   if (fwcF.length || ccF.length || faltaDC) {
     txt += `▸ Especiales\n`;
-    if (faltaDC) txt += `✨ Doble cero (00 · la brillosita de la tapa)\n`;
+    if (faltaDC) txt += `✨ 00\n`;
     if (fwcF.length) txt += `🏆 FWC: ${fwcF.join(', ')}\n`;
     if (ccF.length) txt += `🥤 CC: ${ccF.join(', ')}\n`;
     txt += `\n`;
@@ -1525,7 +1525,7 @@ const compartirSoloRepes = () => {
     return;
   }
   const firma = miNombre ? `— ${miNombre}` : '';
-  let txt = `⚽ MI ÁLBUM MUNDIAL 2026\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let txt = `⚽ MI ÁLBUM MUNDIAL 2026\n\n`;
   if (firma) txt += `${firma}\n\n`;
   txt += `🔄 TENGO ${totalRepes} REPETIDAS para intercambiar 🤝\n\n`;
   for (const [letra, equipos] of Object.entries(GRUPOS)) {
@@ -1534,10 +1534,10 @@ const compartirSoloRepes = () => {
       const r = repesEquipo(eq.code);
       if (r.lista.length > 0) {
         const items = r.lista.map(x => x.cant > 1 ? `${x.n}(x${x.cant})` : `${x.n}`).join(', ');
-        bloque += `${flagOf(eq.code)} ${eq.nombre}: ${items}\n`;
+        bloque += `${flagOf(eq.code)} ${eq.code}: ${items}\n`;
       }
     });
-    if (bloque) txt += `▸ Grupo ${letra}\n${bloque}\n`;
+    if (bloque) txt += bloque;
   }
   const fwcR = [];
   for (let i = 1; i <= FWC_TOTAL; i++) {
@@ -2123,23 +2123,23 @@ const construirMensajeAlbum = (link) => {
   const totalRepes = Object.values(repetidas).reduce((s, c) => s + c, 0);
   const firma = miNombre ? `— ${miNombre}` : '';
 
-  let txt = `⚽ MI ÁLBUM MUNDIAL 2026\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+  let txt = `⚽ MI ÁLBUM MUNDIAL 2026\n\n`;
   if (firma) txt += `${firma}\n\n`;
   txt += `📊 ${stats.tienen}/${stats.total} (${stats.pct}%) · faltan ${stats.faltan} · ${totalRepes} repes\n\n`;
 
   // SECCIÓN 1: lo que me falta
   if (stats.faltan > 0) {
-    txt += `🔍 ME FALTAN\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+    txt += `🔍 ME FALTAN\n\n`;
     for (const [letra, equipos] of Object.entries(GRUPOS)) {
       let bloque = '';
       equipos.forEach(eq => {
         const f = faltantesEquipo(eq.code);
         if (f.length > 0) {
           const estado = f.length === FIGURITAS ? 'todas (1 a 20)' : f.join(', ');
-          bloque += `${flagOf(eq.code)} ${eq.nombre}: ${estado}\n`;
+          bloque += `${flagOf(eq.code)} ${eq.code}: ${estado}\n`;
         }
       });
-      if (bloque) txt += `▸ Grupo ${letra}\n${bloque}\n`;
+      if (bloque) txt += bloque;
     }
     const fwcF = [];
     for (let i = 1; i <= FWC_TOTAL; i++) if (!marcadas.has(`FWC${i}`)) fwcF.push(i);
@@ -2157,17 +2157,17 @@ const construirMensajeAlbum = (link) => {
 
   // SECCIÓN 2: repes
   if (totalRepes > 0) {
-    txt += `🔄 PARA INTERCAMBIAR\n━━━━━━━━━━━━━━━━━━━━\n\n`;
+    txt += `🔄 PARA INTERCAMBIAR\n\n`;
     for (const [letra, equipos] of Object.entries(GRUPOS)) {
       let bloque = '';
       equipos.forEach(eq => {
         const r = repesEquipo(eq.code);
         if (r.lista.length > 0) {
           const items = r.lista.map(x => x.cant > 1 ? `${x.n}(x${x.cant})` : `${x.n}`).join(', ');
-          bloque += `${flagOf(eq.code)} ${eq.nombre}: ${items}\n`;
+          bloque += `${flagOf(eq.code)} ${eq.code}: ${items}\n`;
         }
       });
-      if (bloque) txt += `▸ Grupo ${letra}\n${bloque}\n`;
+      if (bloque) txt += bloque;
     }
     const fwcR = [];
     for (let i = 1; i <= FWC_TOTAL; i++) {
@@ -2481,10 +2481,10 @@ const compartirListaCompleta = () => {
           const r = repesEquipo(eq.code);
           if (r.lista.length > 0) {
             const items = r.lista.map(x => x.cant > 1 ? `${x.n}(x${x.cant})` : `${x.n}`).join(', ');
-            bloque += `${flagOf(eq.code)} ${eq.nombre}: ${items}\n`;
+            bloque += `${flagOf(eq.code)} ${eq.code}: ${items}\n`;
           }
         });
-        if (bloque) txt += `▸ Grupo ${letra}\n${bloque}\n`;
+        if (bloque) txt += bloque;
       }
     }
     if (firma) txt += `\n${firma}`;
@@ -2493,17 +2493,12 @@ const compartirListaCompleta = () => {
   }
 
   // ===== ENCABEZADO =====
-  let txt = `⚽ MI ÁLBUM MUNDIAL 2026\n`;
-  txt += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-  if (firma) txt += `${firma}\n\n`;
-  txt += `📊 Cómo voy: ${tienen} de ${total} (${pct}%)\n`;
-  txt += `🔍 Me faltan ${faltan} · 🔄 Tengo ${totalRepes} repes\n\n`;
+  let txt = `⚽ MI ÁLBUM MUNDIAL 2026\n\n`;
+  if (firma) txt += `${firma}\n`;
+  txt += `📊 ${tienen}/${total} (${pct}%) · faltan ${faltan} · ${totalRepes} repes\n\n`;
 
   // ===== SECCIÓN 1: FIGURITAS QUE ME FALTAN =====
-  txt += `━━━━━━━━━━━━━━━━━━━━\n`;
-  txt += `🔍 FIGURITAS QUE ME FALTAN\n`;
-  txt += `para completar el álbum\n`;
-  txt += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+  txt += `🔍 ME FALTAN\n\n`;
 
   for (const [letra, equipos] of Object.entries(GRUPOS)) {
     let bloque = '';
@@ -2513,10 +2508,10 @@ const compartirListaCompleta = () => {
         const estado = f.length === FIGURITAS
           ? `me faltan todas (1 a 20)`
           : f.join(', ');
-        bloque += `${flagOf(eq.code)} ${eq.nombre}: ${estado}\n`;
+        bloque += `${flagOf(eq.code)} ${eq.code}: ${estado}\n`;
       }
     });
-    if (bloque) txt += `▸ Grupo ${letra}\n${bloque}\n`;
+    if (bloque) txt += bloque;
   }
 
   const fwcF = [];
@@ -2527,18 +2522,15 @@ const compartirListaCompleta = () => {
 
   if (fwcF.length > 0 || ccF.length > 0 || faltaDobleCero) {
     txt += `▸ Especiales\n`;
-    if (faltaDobleCero) txt += `✨ Doble cero (00 · la brillosita de la tapa)\n`;
-    if (fwcF.length > 0) txt += `🏆 FWC (estadios, mascota, trofeo, pelota): ${fwcF.join(', ')}\n`;
-    if (ccF.length > 0) txt += `🥤 CC (canje Coca-Cola con tapitas): ${ccF.join(', ')}\n`;
+    if (faltaDobleCero) txt += `✨ 00\n`;
+    if (fwcF.length > 0) txt += `🏆 FWC: ${fwcF.join(', ')}\n`;
+    if (ccF.length > 0) txt += `🥤 CC: ${ccF.join(', ')}\n`;
     txt += `\n`;
   }
 
   // ===== SECCIÓN 2: REPETIDAS PARA INTERCAMBIAR =====
   if (totalRepes > 0) {
-    txt += `━━━━━━━━━━━━━━━━━━━━\n`;
-    txt += `🔄 REPETIDAS QUE TENGO\n`;
-    txt += `para intercambiar 🤝\n`;
-    txt += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+    txt += `🔄 PARA INTERCAMBIAR\n\n`;
 
     for (const [letra, equipos] of Object.entries(GRUPOS)) {
       let bloque = '';
@@ -2546,10 +2538,10 @@ const compartirListaCompleta = () => {
         const r = repesEquipo(eq.code);
         if (r.lista.length > 0) {
           const items = r.lista.map(x => x.cant > 1 ? `${x.n}(x${x.cant})` : `${x.n}`).join(', ');
-          bloque += `${flagOf(eq.code)} ${eq.nombre}: ${items}\n`;
+          bloque += `${flagOf(eq.code)} ${eq.code}: ${items}\n`;
         }
       });
-      if (bloque) txt += `▸ Grupo ${letra}\n${bloque}\n`;
+      if (bloque) txt += bloque;
     }
 
     const fwcR = [];
@@ -2565,7 +2557,7 @@ const compartirListaCompleta = () => {
     const dcRepe = TIENE_DOBLE_CERO ? (repetidas[DOBLE_CERO_ID] || 0) : 0;
     if (fwcR.length > 0 || ccR.length > 0 || dcRepe > 0) {
       txt += `▸ Especiales\n`;
-      if (dcRepe > 0) txt += `✨ Doble cero (00 · la brillosita de la tapa)${dcRepe > 1 ? ` (x${dcRepe})` : ''}\n`;
+      if (dcRepe > 0) txt += `✨ 00${dcRepe > 1 ? ` (x${dcRepe})` : ''}\n`;
       if (fwcR.length > 0) txt += `🏆 FWC: ${fwcR.join(', ')}\n`;
       if (ccR.length > 0) txt += `🥤 CC: ${ccR.join(', ')}\n`;
       txt += `\n`;
@@ -3598,7 +3590,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.23" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.24" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ ¡Cambiemos figuritas!</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">Abre este link y mirá que figuritas podemos intercambiar!</div>
@@ -3781,7 +3773,7 @@ const renderTabMas = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.23" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.24" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3971,7 +3963,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.23" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.24" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
