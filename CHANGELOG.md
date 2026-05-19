@@ -1,5 +1,45 @@
 # Changelog
 
+## v1.9.18 — 2026-05-18 — Amigos colapsables + multi-import + backup transparente
+
+### Cards de amigos colapsables
+- Cada amigo arranca **colapsado** mostrando solo: nombre + freshness
+  + chips `↑ N` (Le doy) y `↓ N` (Me da) + flecha ▾. Pasa de ~350 px
+  a ~70 px de alto por card, así con varios amigos no se satura la
+  pantalla Compartir.
+- Tap al card → se expande y se ven las listas completas de
+  intercambios + botón "Propuesta" + "Pedir update". El botón
+  "Borrar amigo" queda dentro del card expandido.
+- Estado nuevo `amigosExpandidos: Set<string>`, acción
+  `toggle-amigo`.
+
+### Import de varios amigos a la vez
+- El cuadro "Pegá el código de un amigo" ahora **detecta automáticamente
+  si hay 2+ códigos AM26 o 2+ links `?import=` en el texto pegado**
+  y los procesa todos juntos. Permite pegar varios mensajes/links
+  de WhatsApp uno tras otro y actualizar varios amigos de un saque.
+- Dedupe por nombre del amigo (si pegás dos snapshots distintos del
+  mismo amigo, queda el último).
+- Después de un import simple, el alert dice "✅ X agregado/actualizado.
+  Podés pegar otro código o link para agregar más amigos" para que
+  quede claro que se puede repetir.
+- Lista de formatos aceptados agregó un ítem: "Varios a la vez".
+
+### Backup .txt — listado humano de amigos
+- La sección legible del backup ahora lista cada amigo con sus
+  números:
+  ```
+  Amigos:
+  • Lucas S — 728 pegadas, 68 repes (importado 18/5/2026)
+  • Mariano — 612 pegadas, 95 repes (importado 17/5/2026)
+  ```
+- Aclara que el restore incluye marcadas, repes, nombre y todos los
+  amigos (data ya estaba en el payload base64; ahora también es
+  visible en el preview humano).
+
+### Infra
+- Cache busting `?v=1.9.18` y `CACHE_VERSION = 'album-2026-v1.9.18'`.
+
 ## v1.9.17 — 2026-05-18 — Soporte para mensajes de "Figuritas App" (figuritas.app)
 
 ### Nuevo
