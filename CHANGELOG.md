@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.9.12 — 2026-05-18 — Match sin "(xN)" — solo el número
+
+### Cambio
+- En el card del amigo, las filas de coincidencia ya no muestran
+  `(xN)` al lado de cada figurita cuando hay 2 o más copias spare
+  (en mi lado o en el de él). Solo el número.
+- Igual en el mensaje de WhatsApp del match (acción "Cambio con X"):
+  desapareció el `(tengo 2)` / `(tenés 2)` después del id de cada
+  figurita.
+- Antes: `🇦🇷  5, 10, 15(x2), 18`
+- Ahora: `🇦🇷  5, 10, 15, 18`
+- Justificación: como el intercambio es 1-a-1 por figurita (el otro
+  solo necesita 1 copia para pegar), el conteo de spares no aportaba
+  al intercambio y generaba ruido visual. Si el usuario quiere ver
+  cuántas repes tiene de cada figurita, ya está la pestaña Repes.
+
+### Infra
+- Los campos `tengo` / `tiene` del objeto que retorna `calcularMatch`
+  quedan presentes (calculados pero no visualizados) por si una
+  futura iteración los necesita.
+- Cache busting `?v=1.9.12` y `CACHE_VERSION = 'album-2026-v1.9.12'`.
+
 ## v1.9.11 — 2026-05-18 — Match más compacto: bandera + figuritas, sin nombre
 
 ### Cambio de UX
