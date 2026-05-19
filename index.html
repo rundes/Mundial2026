@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ Mi Álbum Mundial 2026 — gratis, sin registro">
 <meta property="og:description" content="Llevá el control de tu álbum del Mundial 2026: marcá las que tenés, anotá tus repes y coordiná intercambios por WhatsApp. Todo en tu propio celular.">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.10">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.10">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.11">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.11">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ Mi Álbum Mundial 2026">
 <meta name="twitter:description" content="App gratis para llevar tu álbum del Mundial 2026: marcá las que tenés, anotá tus repes y coordiná cambios por WhatsApp.">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.10">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.11">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.10">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.10">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.10">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.10">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.11">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.11">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.11">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.11">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.10';
+const APP_VERSION = '1.9.11';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -3175,12 +3175,13 @@ const renderTabAmigos = () => {
         return porEq;
       };
 
-      const eqInfo = (code) => {
-        const eq = todosLosEquipos.find(e => e.code === code);
-        if (eq) return { nombre: eq.nombre, color: eq.color };
-        if (code === 'FWC') return { nombre: 'Especiales FWC', color: '#0066CC' };
-        if (code === 'CC') return { nombre: 'Coca-Cola', color: '#C8102E' };
-        return { nombre: code, color: '#888' };
+      // Ícono para cada grupo. Para equipos reales usamos la bandera vía
+      // flagHtml (twemoji SVG). Para las secciones especiales que no
+      // tienen país, usamos emojis temáticos.
+      const iconoCodigo = (code) => {
+        if (code === 'FWC') return '🏆';
+        if (code === 'CC') return '🥤';
+        return flagHtml(code);
       };
 
       const renderLista = (items, vacio) => {
@@ -3188,14 +3189,12 @@ const renderTabAmigos = () => {
         const porEq = agrupar(items);
         let html = '';
         Object.entries(porEq).forEach(([code, nums]) => {
-          const info = eqInfo(code);
           // `(x N)` muestra cuántas copias hay disponibles (info), no
           // cuántas se intercambian (siempre 1).
           const txt = nums.map(x => x.spare > 1 ? `${x.n}(x${x.spare})` : `${x.n}`).join(', ');
-          html += `<div class="flex gap-2 text-xs py-1">
-            <span class="inline-block w-2 h-2 rounded-full mt-1 shrink-0" style="background-color: ${info.color}"></span>
-            <span class="font-semibold text-gray-900 w-28 shrink-0 truncate">${escapeHtml(info.nombre)}</span>
-            <span class="text-gray-600">${txt}</span>
+          html += `<div class="flex items-baseline gap-2 py-1 leading-snug">
+            <span class="text-lg shrink-0 leading-none">${iconoCodigo(code)}</span>
+            <span class="text-sm text-gray-700 tabular-nums break-all">${txt}</span>
           </div>`;
         });
         return html;
@@ -3302,7 +3301,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.10" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.11" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3378,7 +3377,7 @@ const renderTabAmigos = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.10" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.11" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -3656,7 +3655,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.10" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.11" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>

@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.9.11 — 2026-05-18 — Match más compacto: bandera + figuritas, sin nombre
+
+### Cambio de UX
+- En las listas de coincidencias del card de un amigo ("Le doy" / "Me da"),
+  cada fila pasa de mostrar **círculo de color + nombre del país +
+  números** a mostrar **solo bandera + números**.
+- Antes: `● Argentina        5, 10, 15`
+- Ahora: `🇦🇷  5, 10, 15`
+- El nombre del país era redundante (la bandera ya identifica al país)
+  y comía espacio horizontal en mobile, forzando truncate sobre nombres
+  largos como "Estados Unidos" o "República Checa". Ahora cada fila
+  respira más y los números están más a la vista.
+- La tipografía de los números también sube de `text-xs` (12 px) a
+  `text-sm` (14 px) para mejor lectura.
+- Para FWC y CC (que no tienen país) se usan emojis temáticos:
+  🏆 para FWC, 🥤 para CC.
+
+### Infra
+- Helper `iconoCodigo(code)` interno a la sección de amigos.
+- Removida la función `eqInfo` que ya no se usa.
+- Cache busting `?v=1.9.11` y `CACHE_VERSION = 'album-2026-v1.9.11'`.
+
 ## v1.9.10 — 2026-05-18 — Fix: no contar dos veces los intercambios con repes ≥ 2
 
 ### Bug
