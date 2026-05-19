@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.9.21 — 2026-05-18 — Fix del dropdown de sugerencias (ancho + click)
+
+### Fix
+- **Ancho del dropdown**: las clases `absolute left-0 right-0` de
+  Tailwind no estaban dando `width: 100%` en todos los navegadores
+  (Android Chrome). Ahora forzamos width/posicionamiento con
+  inline-style (`position:absolute; left:0; right:0; top:100%;
+  width:100%; z-index:30`) para que ocupe siempre todo el ancho del
+  input.
+- **Tap no filtraba**: al tocar una fila del dropdown en mobile, el
+  input perdía foco antes del click → el teclado se cerraba → la
+  página hacía layout shift → la fila se movía y el tap nunca llegaba
+  al botón. Solución: `mousedown` y `touchstart` en el contenedor del
+  dropdown con `preventDefault()`, que mantiene el foco del input
+  durante el touch y permite que el click se complete sobre el botón
+  correcto.
+
+### Infra
+- Cache busting `?v=1.9.21` y `CACHE_VERSION = 'album-2026-v1.9.21'`.
+
 ## v1.9.20 — 2026-05-18 — Dropdown de sugerencias en los buscadores
 
 ### Nuevo

@@ -13,17 +13,17 @@
 // hacerlo nuestro listener 'updatefound' en el HTML va a disparar y mostrarle
 // al usuario el banner "Hay una versión nueva".
 
-const CACHE_VERSION = 'album-2026-v1.9.20';
+const CACHE_VERSION = 'album-2026-v1.9.21';
 const URLS_A_CACHEAR = [
   './',
   './index.html',
-  './manifest.webmanifest?v=1.9.20',
-  './icons/icon-100.png?v=1.9.20',
-  './icons/icon-180.png?v=1.9.20',
-  './icons/icon-192.png?v=1.9.20',
-  './icons/icon-512.png?v=1.9.20',
-  './icons/icon-192-maskable.png?v=1.9.20',
-  './icons/icon-512-maskable.png?v=1.9.20',
+  './manifest.webmanifest?v=1.9.21',
+  './icons/icon-100.png?v=1.9.21',
+  './icons/icon-180.png?v=1.9.21',
+  './icons/icon-192.png?v=1.9.21',
+  './icons/icon-512.png?v=1.9.21',
+  './icons/icon-192-maskable.png?v=1.9.21',
+  './icons/icon-512-maskable.png?v=1.9.21',
 ];
 
 self.addEventListener('install', (event) => {
