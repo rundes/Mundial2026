@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.9.15 — 2026-05-18 — Pegar el link de compartir en "Agregar manualmente"
+
+### Cambio
+- El cuadro **"Pegá el código de un amigo"** (Paso 3 de la pestaña
+  Compartir) ahora acepta también el **link completo** de compartir,
+  no sólo el código `AM26|...` pelado o los mensajes de Figuri.
+- Soporta los tres formatos en el mismo input:
+  - Link de la app: `https://rundes.github.io/Mundial2026/?import=…`
+  - Código AM26 pelado (texto que arranca con `AM26|`)
+  - Mensaje completo de WhatsApp (extrae el link o el código de
+    adentro automáticamente)
+  - Mensajes de Figuri (figuri.app)
+- Implementación: `decodificarEstado` ahora detecta URLs con
+  `?import=…`, extrae el valor del parámetro, lo URL-decodifica y
+  sigue el flujo normal. Si la URL no contiene un código AM26 válido,
+  cae al regex tradicional o al detector de Figuri.
+
+### UI
+- Placeholder del textarea actualizado: "Pegá acá el link, el código
+  AM26… o el mensaje completo".
+- Lista de formatos aceptados actualizada con el ítem del link
+  arriba (es lo más común que la gente comparte).
+- Mensaje de error "No pudimos leer ese mensaje" también lista las
+  tres opciones.
+
+### Infra
+- Cache busting `?v=1.9.15` y `CACHE_VERSION = 'album-2026-v1.9.15'`.
+
 ## v1.9.14 — 2026-05-18 — Nuevo shortener con cascada de servicios + QR usa link corto
 
 ### Fix
