@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ ¡Cambiemos figuritas!">
 <meta property="og:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.22">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.22">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.23">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.23">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ ¡Cambiemos figuritas!">
 <meta name="twitter:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.22">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.23">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.22">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.22">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.22">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.22">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.23">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.23">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.23">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.23">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.22';
+const APP_VERSION = '1.9.23';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -2019,7 +2019,7 @@ const copiarTexto = async (texto) => {
 const compartirCodigo = () => {
   const codigo = codificarEstado(miNombre || 'amigo', marcadas, repetidas);
   const nombre = miNombre || 'tu amigo';
-  const txt = `⚽ ¡Hola! Te paso mi álbum del Mundial 2026 (de ${nombre}). Copialo y pegalo en la pestaña "Compartir" de tu app para ver qué podemos cambiar:\n\n${codigo}`;
+  const txt = `⚽ ¡Hola! Te paso mi álbum del Mundial 2026 (de ${nombre}). Copialo y pegalo en la pestaña "Amigos" de tu app para ver qué podemos cambiar:\n\n${codigo}`;
   // Llamamos a compartirWhatsApp SINCRÓNICAMENTE: Safari iOS exige que
   // la apertura suceda dentro del mismo tick del click, sin async previo.
   compartirWhatsApp(txt);
@@ -2365,7 +2365,7 @@ const compartirSoloCodigo = () => {
 
   if (copiado) {
     setTimeout(() => {
-      alert('✅ Código copiado.\n\nPegalo en la app de tu amigo (pestaña Compartir → "Pegá el código de un amigo").');
+      alert('✅ Código copiado.\n\nPegalo en la app de tu amigo (pestaña Amigos → "Agregar manualmente").');
     }, 50);
   } else {
     window.prompt('Tocá y mantené apretado el código para copiarlo:', codigo);
@@ -2377,7 +2377,7 @@ const compartirSoloCodigo = () => {
 // tenemos su número, solo su nombre en local).
 const pedirActualizacion = (nombreAmigo) => {
   const yo = (miNombre || 'tu amigo').trim();
-  const txt = `¡Hola ${nombreAmigo}! Soy ${yo}. ¿Me podés pasar tu álbum del Mundial 2026 actualizado para ver coincidencias nuevas? 🙏\n\nDesde tu app: pestaña Compartir → "Mandar por WhatsApp".`;
+  const txt = `¡Hola ${nombreAmigo}! Soy ${yo}. ¿Me podés pasar tu álbum del Mundial 2026 actualizado para ver coincidencias nuevas? 🙏\n\nDesde tu app: pestaña Amigos → "Mandarle mi álbum actualizado".`;
   compartirWhatsApp(txt);
 };
 
@@ -3133,9 +3133,9 @@ const renderCarruselMejorPeor = () => {
 };
 
 const renderFabCompartir = () => {
-  // No mostramos el FAB cuando ya estamos en la pestaña Compartir
-  // (los botones de compartir ya son protagonistas ahí).
-  if (tabActiva === 'amigos') return '';
+  // No mostramos el FAB cuando ya estamos en la pestaña Amigos o Más
+  // (los botones de compartir/backup ya son protagonistas ahí).
+  if (tabActiva === 'amigos' || tabActiva === 'mas') return '';
   // Tampoco si hay modales o el bottom sheet ya está abierto.
   if (modalQRVisible || modalLogrosVisible || fabSheetOpen || toastVisible) return '';
   return `<button data-action="abrir-fab" aria-label="Compartir mi álbum"
@@ -3326,7 +3326,7 @@ const renderBloqueInstalar = () => {
           <strong>Cómo abrirla en Safari:</strong><br>
           1. Copiá la dirección de esta página (compartir → copiar enlace).<br>
           2. Abrí Safari y pegala en la barra de direcciones.<br>
-          3. Una vez en Safari, vení a esta misma pestaña "Compartir" y vas a ver el botón para instalar.
+          3. Una vez en Safari, vení a la pestaña "Más" y vas a ver el botón para instalar.
         </div>
       </div>`;
   }
@@ -3557,9 +3557,9 @@ const renderTabAmigos = () => {
   }
 
   return `
-    <div class="text-[10px] font-bold tracking-[0.15em] text-green-600 uppercase mb-1">Compartir e intercambiar</div>
-    <h2 class="text-3xl font-bold tracking-tight text-gray-900 mb-1">Compartir</h2>
-    <p class="text-sm text-gray-500 mb-5">Mandale tu álbum a quien quieras. Si la otra persona también usa la app, escanean el QR y se ven las coincidencias automáticamente.</p>
+    <div class="text-[10px] font-bold tracking-[0.15em] text-green-600 uppercase mb-1">Vínculos entre usuarios</div>
+    <h2 class="text-3xl font-bold tracking-tight text-gray-900 mb-1">Amigos</h2>
+    <p class="text-sm text-gray-500 mb-5">Mandales tu álbum, agregalos a tu lista y mirá qué figuritas pueden intercambiar. Todo gira en torno al link de cada uno.</p>
 
     <!-- ===== TU NOMBRE (destacado, primer paso) ===== -->
     <div class="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-2xl p-5 mb-6 shadow-sm">
@@ -3598,7 +3598,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.22" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.23" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ ¡Cambiemos figuritas!</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">Abre este link y mirá que figuritas podemos intercambiar!</div>
@@ -3655,50 +3655,39 @@ const renderTabAmigos = () => {
       </button>
     </div>
 
-    <!-- ===== INSTALAR EN PANTALLA DE INICIO ===== -->
-    ${renderBloqueInstalar()}
-
-    <!-- ===== COMPARTIR LA APP ===== -->
-    <div class="mt-12 mb-6">
-      <div class="text-[10px] font-bold tracking-[0.15em] text-purple-600 uppercase mb-1">Pasale la app a tus amigos</div>
-      <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-1">Compartir la app</h3>
-      <p class="text-sm text-gray-500 mb-4">Mandale el link a quien quieras. Cuando lo abren ven una tarjeta con título, descripción e ícono. Si querés mandar el archivo HTML para que la usen offline, también podés.</p>
-
-      <div class="bg-purple-50 rounded-2xl p-5">
-        <div class="space-y-3">
-          <button data-action="compartir-link-app" class="w-full bg-purple-600 active:bg-purple-700 text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-            </svg>
-            Compartir el link
-          </button>
-
-          <div class="bg-white rounded-xl p-3 border border-purple-200">
-            <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
-            <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.22" alt="" class="w-12 h-12 rounded-lg shrink-0">
-              <div class="min-w-0 flex-1">
-                <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
-                <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
-                <div class="text-[10px] text-gray-400 mt-0.5 truncate">rundes.github.io</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button data-action="compartir-app" class="bg-white border-2 border-purple-300 active:bg-purple-100 text-purple-700 font-semibold py-3 rounded-2xl text-xs flex items-center justify-center">
-              📎 Archivo HTML
-            </button>
-            <button data-action="descargar-app" class="bg-white border-2 border-purple-300 active:bg-purple-100 text-purple-700 font-semibold py-3 rounded-2xl text-xs flex items-center justify-center">
-              ⬇️ Descargar
-            </button>
-          </div>
-        </div>
-        <p class="text-xs text-gray-500 mt-3 leading-relaxed">
-          El archivo no incluye tus datos: tu amigo arranca con el álbum vacío y carga el suyo. Después, en la pestaña Compartir, pueden intercambiarse los códigos.
-        </p>
+    <!-- ===== SINCRONIZAR POR QR ===== -->
+    <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-2xl p-5 mb-6">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-2xl">📲</span>
+        <div class="text-[10px] font-bold tracking-[0.15em] text-indigo-700 uppercase">Sincronizar al toque</div>
+      </div>
+      <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-2">Compartir con QR</h3>
+      <p class="text-sm text-gray-600 mb-4 leading-relaxed">Generá un código QR y mostráselo a tu mamá, tu papá o un amigo. Lo escanean con la <strong>cámara común</strong> de su celular y se les abre la app con tus datos. No hace falta que tengan la app instalada todavía: la cámara abre el link y el navegador la carga.</p>
+      <button data-action="mostrar-qr" class="w-full bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>
+        </svg>
+        Mostrar mi QR
+      </button>
+      <div class="bg-white/70 rounded-xl px-3 py-2 mt-3 text-xs text-gray-600 leading-relaxed">
+        💡 <strong>Para mamá y papá:</strong> pídanle al chico que les muestre el QR. Abran la cámara del celular, apunten al QR (no necesitan ninguna app especial) y toquen la notificación que aparece. La app se abre con el álbum del nene cargado.
       </div>
     </div>
+
+  `;
+};
+
+// ====== TAB MÁS ======
+// Pestaña con todo lo que NO es vínculo entre usuarios:
+// - Backup (lo más importante, primero)
+// - Instalar app en pantalla de inicio
+// - Compartir la app (a alguien que no la usa todavía)
+// - Sobre la app / privacidad
+const renderTabMas = () => {
+  return `
+    <div class="text-[10px] font-bold tracking-[0.15em] text-emerald-600 uppercase mb-1">Tu álbum y la app</div>
+    <h2 class="text-3xl font-bold tracking-tight text-gray-900 mb-1">Más</h2>
+    <p class="text-sm text-gray-500 mb-5">Backup de tus datos, instalá la app en tu celular y pasásela a tus amigos que no la usan todavía.</p>
 
     <!-- ===== BACKUP / RESTORE ===== -->
     <div class="mb-6">
@@ -3771,22 +3760,48 @@ const renderTabAmigos = () => {
       </div>
     </div>
 
-    <!-- ===== SINCRONIZAR POR QR ===== -->
-    <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-2xl p-5 mb-6">
-      <div class="flex items-center gap-2 mb-1">
-        <span class="text-2xl">📲</span>
-        <div class="text-[10px] font-bold tracking-[0.15em] text-indigo-700 uppercase">Sincronizar al toque</div>
-      </div>
-      <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-2">Compartir con QR</h3>
-      <p class="text-sm text-gray-600 mb-4 leading-relaxed">Generá un código QR y mostráselo a tu mamá, tu papá o un amigo. Lo escanean con la <strong>cámara común</strong> de su celular y se les abre la app con tus datos. No hace falta que tengan la app instalada todavía: la cámara abre el link y el navegador la carga.</p>
-      <button data-action="mostrar-qr" class="w-full bg-indigo-600 active:bg-indigo-700 text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>
-        </svg>
-        Mostrar mi QR
-      </button>
-      <div class="bg-white/70 rounded-xl px-3 py-2 mt-3 text-xs text-gray-600 leading-relaxed">
-        💡 <strong>Para mamá y papá:</strong> pídanle al chico que les muestre el QR. Abran la cámara del celular, apunten al QR (no necesitan ninguna app especial) y toquen la notificación que aparece. La app se abre con el álbum del nene cargado.
+    <!-- ===== INSTALAR EN PANTALLA DE INICIO ===== -->
+    ${renderBloqueInstalar()}
+
+    <!-- ===== COMPARTIR LA APP (a alguien que no la usa) ===== -->
+    <div class="mt-12 mb-6">
+      <div class="text-[10px] font-bold tracking-[0.15em] text-purple-600 uppercase mb-1">Pasale la app a tus amigos</div>
+      <h3 class="text-2xl font-bold tracking-tight text-gray-900 mb-1">Compartir la app</h3>
+      <p class="text-sm text-gray-500 mb-4">Mandale el link a quien todavía no usa la app. Cuando lo abren ven una tarjeta con título, descripción e ícono. Si querés mandar el archivo HTML para que la usen offline, también podés.</p>
+
+      <div class="bg-purple-50 rounded-2xl p-5">
+        <div class="space-y-3">
+          <button data-action="compartir-link-app" class="w-full bg-purple-600 active:bg-purple-700 text-white font-bold py-4 rounded-2xl text-base flex items-center justify-center shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+            Compartir el link
+          </button>
+
+          <div class="bg-white rounded-xl p-3 border border-purple-200">
+            <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
+            <div class="flex gap-3 items-center">
+              <img src="./icons/icon-192.png?v=1.9.23" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <div class="min-w-0 flex-1">
+                <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
+                <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
+                <div class="text-[10px] text-gray-400 mt-0.5 truncate">rundes.github.io</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button data-action="compartir-app" class="bg-white border-2 border-purple-300 active:bg-purple-100 text-purple-700 font-semibold py-3 rounded-2xl text-xs flex items-center justify-center">
+              📎 Archivo HTML
+            </button>
+            <button data-action="descargar-app" class="bg-white border-2 border-purple-300 active:bg-purple-100 text-purple-700 font-semibold py-3 rounded-2xl text-xs flex items-center justify-center">
+              ⬇️ Descargar
+            </button>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-3 leading-relaxed">
+          El archivo no incluye tus datos: tu amigo arranca con el álbum vacío y carga el suyo. Después, en la pestaña Amigos, pueden intercambiarse los códigos.
+        </p>
       </div>
     </div>
 
@@ -3815,6 +3830,7 @@ function render() {
   if (tabActiva === 'tengo') contenido = renderTabTengo();
   else if (tabActiva === 'repes') contenido = renderTabRepes();
   else if (tabActiva === 'amigos') contenido = renderTabAmigos();
+  else if (tabActiva === 'mas') contenido = renderTabMas();
 
   const cantAmigos = Object.keys(amigos).length;
 
@@ -3837,7 +3853,7 @@ function render() {
           <div class="text-sm font-semibold text-emerald-900 leading-tight">Hacé un backup de tu álbum</div>
           <div class="text-xs text-emerald-800 mt-0.5">${ultimoBackupTs === 0 ? 'Todavía no guardaste ninguna copia.' : `Hace ${Math.floor((Date.now() - ultimoBackupTs) / (24*3600*1000))} días que no hacés backup.`} Cargaste ${cambiosDesdeBackup} cambios desde la última.</div>
           <div class="flex gap-2 mt-1.5">
-            <button data-action="tab" data-tab="amigos" class="text-xs bg-emerald-600 active:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg">Hacer backup</button>
+            <button data-action="tab" data-tab="mas" class="text-xs bg-emerald-600 active:bg-emerald-700 text-white font-semibold px-3 py-1.5 rounded-lg">Hacer backup</button>
             <button data-action="dismiss-backup" class="text-xs text-emerald-800 active:text-emerald-900 font-semibold px-2 py-1.5">Más tarde</button>
           </div>
         </div>
@@ -3942,7 +3958,8 @@ function render() {
         <div role="tablist" class="flex gap-1.5 mt-3 bg-gray-100 p-1 rounded-2xl">
           ${tabBtn('tengo', 'Tengo', stats.tienen)}
           ${tabBtn('repes', 'Repes', stats.totalRepes)}
-          ${tabBtn('amigos', 'Compartir', cantAmigos)}
+          ${tabBtn('amigos', 'Amigos', cantAmigos)}
+          ${tabBtn('mas', 'Más', null)}
         </div>
       </div>
     </div>
@@ -3954,7 +3971,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.22" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.23" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
@@ -4244,7 +4261,7 @@ document.addEventListener('click', (e) => {
     fabSheetOpen = false;
     // mostrarQRSync requiere nombre. Si no hay, le pedimos al usuario ir a la pestaña Compartir.
     if (!miNombre || !miNombre.trim()) {
-      alert('Antes de generar el QR, andá a la pestaña Compartir y escribí tu nombre en "Paso 1 · ¿Cómo te llamás?"');
+      alert('Antes de generar el QR, andá a la pestaña Amigos y escribí tu nombre en "Paso 1 · ¿Cómo te llamás?"');
       tabActiva = 'amigos';
       if (storage) try { storage.setItem(STORAGE_KEY_TAB, tabActiva); } catch(e) {}
       render();

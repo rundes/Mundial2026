@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.9.23 — 2026-05-19 — Separar pestaña "Compartir" en "Amigos" y "Más"
+
+### Cambio
+- La pestaña **Compartir** crecía cada vez más (matches, push, agregar
+  amigos, QR, backup, instalar, compartir la app, privacy disclosure)
+  y se hacía difícil entender qué hacía cada bloque. La separé en dos
+  pestañas con propósitos claros:
+- **Amigos** (renombrada de Compartir): todo lo relacionado al
+  vínculo entre usuarios.
+  - Tu nombre (Paso 1)
+  - Tus amigos · Coincidencias (cards con push manual)
+  - ¡Cambiemos figuritas! (mandar tu link)
+  - Agregar manualmente (pegar links/códigos)
+  - Sincronizar por QR
+- **Más** (nueva): herramientas generales de la app.
+  - Copia de seguridad (backup + restore)
+  - Instalar app en pantalla de inicio
+  - Compartir la app (a alguien que no la usa)
+  - Sobre la app / privacidad
+
+### Detalles
+- 4 pestañas ahora (Tengo · Repes · Amigos · Más). Cada botón sigue
+  siendo `flex-1` así se ajustan al ancho disponible.
+- El banner de "Hacé backup" ahora redirige a la pestaña Más.
+- El FAB de compartir se oculta cuando estás en Amigos o Más
+  (los botones ya son protagonistas en ambas).
+- Mensajes de invitación y prompts actualizados: "pestaña Compartir"
+  → "pestaña Amigos" / "pestaña Más" según corresponda. Ej. el
+  mensaje WhatsApp dice "pegalo en la pestaña Amigos de tu app".
+
+### Infra
+- Nueva función `renderTabMas()` con las 4 secciones.
+- Cache busting `?v=1.9.23` y `CACHE_VERSION = 'album-2026-v1.9.23'`.
+
 ## v1.9.22 — 2026-05-19 — Push manual a cada amigo + indicador "sin avisar"
 
 ### Modelo nuevo de vínculos persistentes
