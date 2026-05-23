@@ -1,5 +1,44 @@
 # Changelog
 
+## v1.9.27 — 2026-05-23 — Mensaje específico al escanear QR binario de Figuritas App
+
+### Por qué
+- Investigué qué encode el QR de **Figuritas App** (figuritas.app):
+  un header de 6 bytes magic (`E7 AB 99 E6 95 91` = `站救` en UTF-8)
+  + dos secciones gzip+base64 separadas por `;`. Cada sección es un
+  bitmap binario de ~125 bytes (1000 bits para las 994 figuritas del
+  álbum).
+- El **orden de los bits** (qué bit = qué figurita) no es público:
+  decodificar requeriría reverse-engineering del mapeo (varios QRs de
+  álbumes conocidos para deducirlo).
+
+### Solución
+- En vez de tirar el error genérico "no pudimos leer", `importarAmigo`
+  ahora **detecta el magic header de Figuritas App** y muestra un
+  mensaje específico:
+  > 🔍 Detectamos un QR de Figuritas App.
+  >
+  > Su formato binario es propietario y no podemos leerlo. Pero la
+  > app entiende el formato de TEXTO de Figuritas App (el mensaje
+  > "Me faltan… MEX 🇲🇽: 5, 10, …").
+  >
+  > Pedile a tu amigo que comparta su lista como texto desde
+  > Figuritas App (en vez de mostrarte el QR) y te lo mande por
+  > WhatsApp. Pegá ese mensaje acá en "Agregar manualmente" y se va
+  > a importar bien.
+- Esto cubre tanto el flow del escáner (v1.9.26) como pegar el
+  contenido del QR manualmente.
+
+### Lo que sigue funcionando
+- QRs de esta app (link con `?import=AM26|...`) → import directo ✓
+- QRs con códigos AM26 pelados → import directo ✓
+- QRs de Figuri (figuri.app) → si encode el formato de texto, se
+  parsea con `parseFiguriMessage` ✓
+- Texto de Figuritas App → ya se parseaba bien desde v1.9.17 ✓
+
+### Infra
+- Cache busting `?v=1.9.27` y `CACHE_VERSION = 'album-2026-v1.9.27'`.
+
 ## v1.9.26 — 2026-05-19 — Escáner de QR nativo (esta app, Figuri, Figuritas App)
 
 ### Nuevo
