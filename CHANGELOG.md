@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.9.29 — 2026-05-23 — Subir imagen del QR para decodificarla
+
+### Nuevo
+- Junto al botón "Escanear con cámara" ahora hay un segundo botón:
+  **"Subir imagen del QR"**. Abre el selector de archivos del SO y
+  permite elegir una imagen (JPG, PNG, WebP) que contenga un QR
+  (típicamente screenshots de WhatsApp, recibidos de un amigo).
+- Soporta los mismos formatos que el escáner en vivo:
+  - QR de esta app (link `?import=AM26|...`)
+  - QR con código AM26 pelado
+  - QR binario de Figuritas App (con la decodificación experimental
+    de v1.9.28)
+  - QR con texto de Figuri/Figuritas App (raro, pero por las dudas)
+- Usa la misma API `BarcodeDetector` que el escáner en vivo (zero
+  dependencias, Chrome 83+/Edge 88+).
+- Si la imagen no se decodifica al primer intento, prueba un upscale
+  2× con canvas — ayuda con screenshots de baja resolución.
+
+### UX
+- Los dos botones (Escanear con cámara / Subir imagen del QR) van
+  side-by-side en un `grid-cols-2` para que sean igualmente
+  visibles. Texto en 2 líneas para que entren bien en mobile.
+- Mensajes de error claros si la imagen no contiene QR, si el
+  archivo no es imagen, o si el navegador no soporta la API.
+
+### Infra
+- Nueva función `escanearQRDesdeImagen(file)` async.
+- Reusa el listener `change` delegado (mismo patrón que el
+  file-input de restore).
+- Cache busting `?v=1.9.29` y `CACHE_VERSION = 'album-2026-v1.9.29'`.
+
 ## v1.9.28 — 2026-05-23 — Decodificación experimental del QR binario de Figuritas App
 
 ### Reverse-engineering
