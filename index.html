@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ ¡Cambiemos figuritas!">
 <meta property="og:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.27">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.27">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.28">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.28">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ ¡Cambiemos figuritas!">
 <meta name="twitter:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.27">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.28">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.27">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.27">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.27">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.27">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.28">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.28">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.28">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.28">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.27';
+const APP_VERSION = '1.9.28';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -1892,25 +1892,145 @@ const parseFiguriMessage = (texto) => {
   return { marcadas, repetidas: repes };
 };
 
+// ====== PARSER QR BINARIO DE FIGURITAS APP (figuritas.app) ======
+// Reverse-engineered en v1.9.28. El QR contiene:
+//   <header bytes (longitud variable, ~4-6 bytes)>
+//   <base64 gzip section 0>;<base64 gzip section 1>
+// Cada sección gunzip → 123 bytes (984 bits, de los cuales 980 útiles).
+// Layout LSB-first:
+//   bits 0-959  : 48 equipos × 20 figuritas, en orden de grupos A-L
+//                 (mismo orden que nuestro ORDEN_FIGURITAS).
+//   bits 960-978: FWC1-FWC19
+//   bit 979     : Doble Cero (00)
+//   bits 980-983: padding sin usar
+// Section 0 = FALTANTES (1 = NO la tengo).
+// Section 1 = REPES (1 = tengo al menos una; la cuenta exacta no se
+//             codifica en el QR).
+// Figuritas App NO incluye la sección Coca-Cola (14 figuritas).
+const FA_QR_PATTERN = /H4sI[A-Za-z0-9+/=]+;H4sI[A-Za-z0-9+/=]+/;
+const FA_TOTAL_BITS = 960 + FWC_TOTAL + 1; // 980
+
+const parseFiguritasAppQR = async (raw) => {
+  if (typeof raw !== 'string') return null;
+  const m = raw.match(FA_QR_PATTERN);
+  if (!m) return null;
+  const [s1b64, s2b64] = m[0].split(';');
+
+  const gunzipB64 = async (b64) => {
+    let binStr;
+    try { binStr = atob(b64); } catch (e) { return null; }
+    const gzBytes = new Uint8Array(binStr.length);
+    for (let i = 0; i < binStr.length; i++) gzBytes[i] = binStr.charCodeAt(i);
+    if (gzBytes[0] !== 0x1f || gzBytes[1] !== 0x8b) return null;
+    if (typeof DecompressionStream === 'undefined') return null;
+    try {
+      const ds = new DecompressionStream('gzip');
+      const stream = new Blob([gzBytes]).stream().pipeThrough(ds);
+      const buf = await new Response(stream).arrayBuffer();
+      return new Uint8Array(buf);
+    } catch (e) { return null; }
+  };
+
+  const [secFaltantes, secRepes] = await Promise.all([gunzipB64(s1b64), gunzipB64(s2b64)]);
+  if (!secFaltantes || !secRepes) return null;
+
+  // Mapea índice de bit a id de figurita según nuestro ORDEN_FIGURITAS.
+  // Para los 960 bits de equipos, reusamos directamente el orden (que
+  // pone teams ordenados por grupo y figuritas 1-20 dentro de cada team).
+  const idAtBit = (bitPos) => {
+    if (bitPos < 960) {
+      return ORDEN_FIGURITAS[bitPos]; // mismo orden
+    } else if (bitPos < 960 + FWC_TOTAL) {
+      return `FWC${bitPos - 960 + 1}`;
+    } else if (bitPos === 960 + FWC_TOTAL) {
+      return DOBLE_CERO_ID;
+    }
+    return null; // padding
+  };
+
+  const faltantes = new Set();
+  for (let byteIdx = 0; byteIdx < secFaltantes.length; byteIdx++) {
+    for (let bit = 0; bit < 8; bit++) {
+      const pos = byteIdx * 8 + bit;
+      if (pos >= FA_TOTAL_BITS) break;
+      if ((secFaltantes[byteIdx] >> bit) & 1) {
+        const id = idAtBit(pos);
+        if (id) faltantes.add(id);
+      }
+    }
+  }
+
+  // marcadas = (todo el universo de Figuritas App, excepto las CC) menos faltantes
+  const marcadas = new Set();
+  for (let pos = 0; pos < FA_TOTAL_BITS; pos++) {
+    const id = idAtBit(pos);
+    if (id && !faltantes.has(id)) marcadas.add(id);
+  }
+
+  // repetidas: 1 por cada bit seteado (cantidad exacta no codificada en QR).
+  const repetidas = {};
+  for (let byteIdx = 0; byteIdx < secRepes.length; byteIdx++) {
+    for (let bit = 0; bit < 8; bit++) {
+      const pos = byteIdx * 8 + bit;
+      if (pos >= FA_TOTAL_BITS) break;
+      if ((secRepes[byteIdx] >> bit) & 1) {
+        const id = idAtBit(pos);
+        if (id) repetidas[id] = 1;
+      }
+    }
+  }
+
+  return { marcadas, repetidas };
+};
+
 const importarAmigo = (codigo) => {
   // Detección especial: QR binario de Figuritas App (figuritas.app).
-  // Su QR empieza con los bytes magic E7 AB 99 E6 95 91 (= "站救" en
-  // UTF-8) seguido de dos secciones gzip+base64 separadas por ";".
-  // Cada sección es un bitmap de ~125 bytes (≈1000 bits para las 994
-  // figuritas del álbum), pero el ORDEN de los bits no es público —
-  // sería reverse-engineering deducir qué bit corresponde a qué
-  // figurita. Por eso no podemos decodificar el contenido. En vez de
-  // tirar el error genérico, ayudamos al usuario a usar el formato de
-  // TEXTO de Figuritas App (que sí soportamos).
-  if (typeof codigo === 'string' && codigo.startsWith('站救')) {
-    alert('🔍 Detectamos un QR de Figuritas App.\n\n' +
-          'Su formato binario es propietario y no podemos leerlo. ' +
-          'Pero la app entiende el formato de TEXTO de Figuritas App ' +
-          '(el mensaje "Me faltan… MEX 🇲🇽: 5, 10, …").\n\n' +
-          'Pedile a tu amigo que comparta su lista como texto desde ' +
-          'Figuritas App (en vez de mostrarte el QR) y te lo mande por ' +
-          'WhatsApp. Pegá ese mensaje acá en "Agregar manualmente" y se ' +
-          'va a importar bien.');
+  // Reverse-engineered en v1.9.28. El QR contiene un header de longitud
+  // variable + dos secciones gzip+base64 separadas por ";". Section 0
+  // es un bitmap de FALTANTES (1 = no la tengo), Section 1 es un bitmap
+  // de REPES (1 = tengo al menos una). LSB-first within byte. 980 bits
+  // útiles: 960 (48 equipos × 20) + 19 (FWC) + 1 (Doble Cero). Figuritas
+  // App NO incluye la sección Coca-Cola.
+  if (typeof codigo === 'string' && FA_QR_PATTERN.test(codigo)) {
+    parseFiguritasAppQR(codigo).then((fa) => {
+      if (!fa) {
+        alert('🔍 Detectamos un QR de Figuritas App pero no pudimos decodificarlo.\n\n' +
+              'Puede que tu navegador no soporte la descompresión gzip nativa ' +
+              '(necesita Chrome 80+ o Safari 16.4+). Probá actualizar el navegador, ' +
+              'o pedile a tu amigo que comparta el formato de TEXTO desde Figuritas App.');
+        return;
+      }
+      const tienen = fa.marcadas.size;
+      const totalRepes = Object.keys(fa.repetidas).length;
+      const ok = confirm(
+        `📷 Detectamos un QR de Figuritas App.\n\n` +
+        `📊 Tu amigo tiene ${tienen} de ${TOTAL_FIGURITAS - CC_TOTAL} figuritas (esa app no usa Coca-Cola).\n` +
+        (totalRepes ? `🔄 Repetidas: ${totalRepes} distintas\n` : '') +
+        `\n⚠️ El mapeo bit↔figurita es por reverse-engineering. Si ves nombres ` +
+        `raros después, contame y lo afinamos.\n\n` +
+        `¿Querés agregarlo a tu lista de amigos?`
+      );
+      if (!ok) return;
+      const nombre = window.prompt(
+        'Los QR de Figuritas App no incluyen el nombre del que comparte.\n\n¿Cómo se llama tu amigo? (para identificarlo en tu lista)', '');
+      if (!nombre || !nombre.trim()) return;
+      const nombreSafe = nombre.trim().replace(/[:|]/g, ' ').slice(0, 30);
+      if (!(nombreSafe in amigos) && Object.keys(amigos).length >= MAX_AMIGOS) {
+        alert(`Ya tenés ${MAX_AMIGOS} amigos guardados (el máximo). Borrá alguno antes de agregar otro.`);
+        return;
+      }
+      amigos[nombreSafe] = {
+        marcadas: [...fa.marcadas],
+        repetidas: fa.repetidas,
+        fecha: Date.now(),
+        cambiosDesdeUltimoShare: 0,
+        ultimoShareAEsteTs: 0,
+      };
+      guardar();
+      chequearLogros();
+      render();
+      setTimeout(() => alert(`✅ Listo: "${nombreSafe}" agregado desde QR de Figuritas App.`), 80);
+    });
     return;
   }
 
@@ -3743,7 +3863,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.27" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.28" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ ¡Cambiemos figuritas!</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">Abre este link y mirá que figuritas podemos intercambiar!</div>
@@ -3944,7 +4064,7 @@ const renderTabMas = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.27" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.28" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -4134,7 +4254,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.27" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.28" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>

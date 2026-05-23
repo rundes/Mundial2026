@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.9.28 — 2026-05-23 — Decodificación experimental del QR binario de Figuritas App
+
+### Reverse-engineering
+- El usuario me pasó un QR de **álbum vacío** de Figuritas App. Eso
+  me dio el baseline para deducir el formato:
+  - Section 0 = **FALTANTES** (1 = no la tengo). Empty álbum → todos los
+    bits útiles seteados.
+  - Section 1 = **REPES** (1 = tengo al menos una repe, sin contador
+    exacto).
+  - Bit order: **LSB-first within byte** (980 bits set en empty es
+    exacto).
+  - 980 bits = 48 equipos × 20 figuritas (960) + 19 FWC + 1 Doble Cero.
+  - **Figuritas App NO incluye la sección Coca-Cola** (14 figuritas).
+
+### Nuevo
+- `parseFiguritasAppQR(raw)` async: detecta el pattern del QR (header
+  variable + `H4sI...;H4sI...`), descomprime con `DecompressionStream`
+  ('gzip', soportado en Chrome 80+, Safari 16.4+), mapea los bits a
+  IDs de figuritas según nuestro `ORDEN_FIGURITAS`, y devuelve
+  `{ marcadas, repetidas }`.
+- `importarAmigo` ya no solo detecta el QR para tirar error — ahora
+  intenta decodificarlo. Si tiene éxito, muestra confirm con stats:
+  > 📷 Detectamos un QR de Figuritas App.
+  > 📊 Tu amigo tiene 679 de 980 figuritas (esa app no usa Coca-Cola).
+  > 🔄 Repetidas: 97 distintas
+  >
+  > ⚠️ El mapeo bit↔figurita es por reverse-engineering. Si ves nombres
+  > raros después, contame y lo afinamos.
+- Si el navegador no soporta `DecompressionStream`, fallback al
+  mensaje de antes pidiendo el formato de texto.
+
+### Advertencia
+- El mapeo es **experimental**. Asume:
+  - Orden de equipos por grupo: A→B→C→…→L (igual que nosotros).
+  - Dentro de cada equipo: figuritas 1→20.
+  - Después de 960 bits de equipos vienen los 19 FWC.
+  - Bit 979 es la Doble Cero.
+- Si Figuritas App usa un orden distinto (ej. grupos en otro orden,
+  o algunos teams swapeados), el match va a aparecer corrido.
+- Las repes vienen como "1 cada una" porque el QR no codifica
+  cantidad exacta, solo "tiene/no tiene repe".
+
+### Infra
+- Cache busting `?v=1.9.28` y `CACHE_VERSION = 'album-2026-v1.9.28'`.
+
 ## v1.9.27 — 2026-05-23 — Mensaje específico al escanear QR binario de Figuritas App
 
 ### Por qué
