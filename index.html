@@ -19,8 +19,8 @@
 <meta property="og:title" content="⚽ ¡Cambiemos figuritas!">
 <meta property="og:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
 <meta property="og:url" content="https://rundes.github.io/Mundial2026/">
-<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.25">
-<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.25">
+<meta property="og:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.26">
+<meta property="og:image:secure_url" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.26">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1600">
 <meta property="og:image:height" content="800">
@@ -31,15 +31,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="⚽ ¡Cambiemos figuritas!">
 <meta name="twitter:description" content="Abre este link y mirá que figuritas podemos intercambiar!">
-<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.25">
+<meta name="twitter:image" content="https://rundes.github.io/Mundial2026/social-preview.jpg?v=1.9.26">
 <meta name="twitter:image:alt" content="Álbum Figus Mundial 2026">
 
 <link rel="canonical" href="https://rundes.github.io/Mundial2026/">
 
-<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.25">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.25">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.25">
-<link rel="manifest" href="./manifest.webmanifest?v=1.9.25">
+<link rel="icon" type="image/png" sizes="100x100" href="./icons/icon-100.png?v=1.9.26">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=1.9.26">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png?v=1.9.26">
+<link rel="manifest" href="./manifest.webmanifest?v=1.9.26">
 <title>Mi Álbum Mundial 2026</title>
 
 <!-- Analytics no invasivo: GoatCounter. Sin cookies, sin tracking individual,
@@ -214,7 +214,7 @@ const ejecutarPromptInstalacion = async () => {
 // ====== CONTROL DE VERSIÓN Y ACTUALIZACIONES ======
 // La versión que se ve en el footer y se compara con la del SW para detectar
 // si hay una versión nueva descargada esperando aplicarse.
-const APP_VERSION = '1.9.25';
+const APP_VERSION = '1.9.26';
 const APP_BUILD = '2026-05-18';
 const STORAGE_KEY_UPDATE_DISMISS = 'album-mundial-2026-update-dismiss';
 
@@ -231,6 +231,12 @@ let modalQRData = null;
 // corto no compartimos: con URL larga WhatsApp pone "Leer más" y trunca
 // el mensaje, lo que rompe el import del receptor.
 let compartirEnProgreso = false;
+
+// Estado del escáner QR. Usa la API nativa BarcodeDetector que está
+// disponible en Android Chrome 83+, Edge 88+, Opera mobile. En iOS
+// Safari no está, mostramos un mensaje de fallback explicando que usen
+// la cámara nativa del teléfono y peguen el resultado.
+let escanQR = { activo: false, stream: null, raf: null, detector: null, videoEl: null };
 
 const generarUrlSync = () => {
   const codigo = codificarEstado(miNombre || 'amigo', marcadas, repetidas);
@@ -280,6 +286,79 @@ const mostrarQRSync = () => {
 const cerrarModalQR = () => {
   modalQRVisible = false;
   modalQRData = null;
+  render();
+};
+
+// ====== ESCÁNER QR (cámara) ======
+// Lee QRs de OTRAS apps (Figuritas App, Figuri, etc.) o de esta misma
+// app y delega al pipeline existente importarAmigo() que ya detecta
+// AM26 / URL ?import= / mensajes de Figuri / mensajes de Figuritas App.
+const iniciarScanQR = async () => {
+  if (typeof BarcodeDetector === 'undefined') {
+    alert('Tu navegador no soporta escanear QR directamente desde la app. Probá:\n\n' +
+          '1. Abrí la cámara común de tu celular y apuntá al QR.\n' +
+          '2. Si te muestra un link, tocalo (te lleva a la app de tu amigo).\n' +
+          '3. Si te muestra texto (o si querés importar a esta app), copialo y pegalo abajo en "Pegá el código de un amigo".\n\n' +
+          'Funciona con QRs de esta app, Figuri y Figuritas App.');
+    return;
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false,
+    });
+  } catch (e) {
+    alert('No pudimos acceder a la cámara.\n\nVerificá que el navegador tenga permiso (Configuración del sitio → Cámara → Permitir) y volvé a intentar.');
+    return;
+  }
+  escanQR.stream = stream;
+  escanQR.activo = true;
+  try {
+    escanQR.detector = new BarcodeDetector({ formats: ['qr_code'] });
+  } catch (e) {
+    escanQR.detector = new BarcodeDetector();
+  }
+  render();
+  // Después del render, agarramos el <video> y arrancamos el loop.
+  setTimeout(() => {
+    const video = document.getElementById('qr-scan-video');
+    if (!video) return;
+    escanQR.videoEl = video;
+    video.srcObject = stream;
+    video.play().catch(() => {});
+    bucleScanQR();
+  }, 80);
+};
+
+const bucleScanQR = async () => {
+  if (!escanQR.activo || !escanQR.videoEl || !escanQR.detector) return;
+  try {
+    const codes = await escanQR.detector.detect(escanQR.videoEl);
+    if (codes && codes.length > 0) {
+      const raw = codes[0].rawValue || '';
+      cerrarScanQR();
+      if (raw && raw.trim()) {
+        // Pequeño delay para que el modal termine de cerrarse antes
+        // del confirm/alert de importarAmigo.
+        setTimeout(() => importarAmigo(raw), 80);
+      }
+      return;
+    }
+  } catch (e) { /* sigue intentando */ }
+  escanQR.raf = requestAnimationFrame(bucleScanQR);
+};
+
+const cerrarScanQR = () => {
+  if (escanQR.stream) {
+    try { escanQR.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  }
+  if (escanQR.raf) { try { cancelAnimationFrame(escanQR.raf); } catch (e) {} }
+  escanQR.activo = false;
+  escanQR.stream = null;
+  escanQR.detector = null;
+  escanQR.videoEl = null;
+  escanQR.raf = null;
   render();
 };
 
@@ -3643,7 +3722,7 @@ const renderTabAmigos = () => {
       <div class="bg-white rounded-2xl p-3 border border-green-200 mb-4 shadow-sm">
         <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-2">El link se ve así en el chat</div>
         <div class="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
-          <img src="./social-preview.jpg?v=1.9.25" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
+          <img src="./social-preview.jpg?v=1.9.26" alt="" class="w-full aspect-[2/1] object-cover" onerror="this.style.display='none'">
           <div class="px-3 py-2">
             <div class="text-xs font-bold text-gray-900 leading-tight">⚽ ¡Cambiemos figuritas!</div>
             <div class="text-[11px] text-gray-600 leading-snug line-clamp-2 mt-0.5">Abre este link y mirá que figuritas podemos intercambiar!</div>
@@ -3697,6 +3776,20 @@ const renderTabAmigos = () => {
 
       <button data-action="importar-amigo" class="w-full bg-amber-500 active:bg-amber-600 text-white font-semibold py-3 rounded-xl text-sm">
         Agregar amigo
+      </button>
+
+      <div class="flex items-center gap-2 my-3">
+        <div class="flex-1 h-px bg-amber-200"></div>
+        <div class="text-[10px] text-amber-700 font-bold tracking-wider uppercase">o escaneá un QR</div>
+        <div class="flex-1 h-px bg-amber-200"></div>
+      </div>
+
+      <button data-action="escanear-qr" class="w-full bg-white border-2 border-amber-300 active:bg-amber-100 text-amber-800 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 9V6a2 2 0 012-2h3M21 9V6a2 2 0 00-2-2h-3M3 15v3a2 2 0 002 2h3M21 15v3a2 2 0 01-2 2h-3"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 9h.01M9 15h.01M15 9h.01M15 15h.01"/>
+        </svg>
+        Escanear QR (esta app, Figuri, Figuritas App)
       </button>
     </div>
 
@@ -3830,7 +3923,7 @@ const renderTabMas = () => {
           <div class="bg-white rounded-xl p-3 border border-purple-200">
             <div class="text-[10px] font-bold tracking-wider text-gray-500 uppercase mb-1">Vista previa del link</div>
             <div class="flex gap-3 items-center">
-              <img src="./icons/icon-192.png?v=1.9.25" alt="" class="w-12 h-12 rounded-lg shrink-0">
+              <img src="./icons/icon-192.png?v=1.9.26" alt="" class="w-12 h-12 rounded-lg shrink-0">
               <div class="min-w-0 flex-1">
                 <div class="text-xs font-bold text-gray-900 leading-tight">⚽ Mi Álbum Mundial 2026 — gratis, sin registro</div>
                 <div class="text-[10px] text-gray-600 leading-snug mt-0.5 line-clamp-2">App para llevar tu álbum del Mundial 2026 y coordinar cambios por WhatsApp.</div>
@@ -4020,7 +4113,7 @@ function render() {
     <footer class="max-w-3xl mx-auto px-4 pb-12 pt-4 border-t border-gray-100">
       <div class="flex items-center justify-between text-[11px] text-gray-400">
         <div class="flex items-center gap-2">
-          <img src="./icons/icon-100.png?v=1.9.25" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
+          <img src="./icons/icon-100.png?v=1.9.26" alt="" width="20" height="20" class="rounded-md" onerror="this.style.display='none'">
           <span class="font-semibold text-gray-500">Álbum Mundial 2026</span>
           <span class="tabular-nums">v${APP_VERSION}</span>
         </div>
@@ -4047,6 +4140,27 @@ function render() {
         <div class="text-3xl mb-2" aria-hidden="true">⚽</div>
         <div class="text-base font-semibold text-gray-900 mb-1">Preparando tu link…</div>
         <div class="text-xs text-gray-500 leading-snug">Esperá un toque mientras lo acortamos. Sin acortar, WhatsApp recorta el mensaje y se pierden figuritas.</div>
+      </div>
+    </div>
+    ` : ''}
+
+    ${escanQR.activo ? `
+    <div class="fixed inset-0 z-50 bg-black flex flex-col" data-action="noop">
+      <div class="absolute top-0 left-0 right-0 bg-black/70 px-4 py-3 z-10 flex items-center justify-between" style="padding-top: calc(0.75rem + env(safe-area-inset-top));">
+        <div class="text-white min-w-0">
+          <div class="text-[10px] font-bold tracking-[0.15em] text-blue-300 uppercase">Escanear QR</div>
+          <div class="text-base font-bold leading-tight">Apuntá la cámara al QR</div>
+        </div>
+        <button data-action="cerrar-scan-qr" class="bg-white/20 active:bg-white/30 text-white px-3 py-2 rounded-xl text-sm font-semibold shrink-0 ml-2">
+          Cancelar
+        </button>
+      </div>
+      <video id="qr-scan-video" autoplay playsinline muted class="w-full h-full object-cover bg-black"></video>
+      <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+        <div class="w-64 h-64 border-4 border-white/80 rounded-3xl shadow-xl"></div>
+      </div>
+      <div class="absolute bottom-0 left-0 right-0 bg-black/70 px-4 py-3 text-center" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));">
+        <div class="text-xs text-white/80 leading-snug">Aceptamos QR de esta app, Figuri (figuri.app) y Figuritas App (figuritas.app).</div>
       </div>
     </div>
     ` : ''}
@@ -4264,6 +4378,8 @@ document.addEventListener('click', (e) => {
   else if (action === 'borrar-amigo') borrarAmigo(btn.dataset.nombre);
   else if (action === 'pedir-actualizacion') pedirActualizacion(btn.dataset.nombre);
   else if (action === 'compartir-a-amigo') compartirLinkAEsteAmigo(btn.dataset.nombre);
+  else if (action === 'escanear-qr') iniciarScanQR();
+  else if (action === 'cerrar-scan-qr') cerrarScanQR();
   else if (action === 'match-wpp') {
     const nombre = btn.dataset.nombre;
     const a = amigos[nombre];

@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.9.26 — 2026-05-19 — Escáner de QR nativo (esta app, Figuri, Figuritas App)
+
+### Nuevo
+- Botón **"Escanear QR"** en la pestaña Amigos → Agregar manualmente.
+- Abre la cámara trasera del celular, detecta el QR en vivo y, una
+  vez decodificado, pasa el contenido al pipeline existente
+  (`importarAmigo`) que ya maneja:
+  - Links de esta app (`?import=AM26|...`)
+  - Códigos AM26 pelados
+  - Mensajes de Figuri (figuri.app)
+  - Mensajes de Figuritas App (figuritas.app)
+- O sea: cualquier QR que encode UNO de esos formatos se importa
+  con un toque. Si encode otra cosa, salta el mensaje de "no
+  pudimos leer".
+
+### Compatibilidad
+- Usa la API nativa **`BarcodeDetector`** (sin librería extra, 0 KB).
+  Soportado en Android Chrome 83+, Edge 88+, Opera mobile, Samsung
+  Internet. Cobertura ~90% en Android.
+- En iOS Safari (sin BarcodeDetector) y en navegadores que no lo
+  soporten, el botón muestra un alert con instrucciones de fallback:
+  usar la cámara común del teléfono → si decodifica un link tocarlo,
+  o si decodifica texto copiarlo y pegarlo en el textarea de arriba.
+
+### UX del escáner
+- Modal full-screen con vista en vivo de la cámara.
+- Marco blanco redondeado en el centro como guía visual.
+- Botón **Cancelar** arriba a la derecha (para de la cámara,
+  cierra el modal).
+- Footer explicando los formatos aceptados.
+- En cuanto detecta un QR válido, cierra automáticamente y dispara
+  el flujo de import.
+
+### Permisos
+- Pide permiso de cámara al tocar el botón (gesto del usuario).
+- Si el usuario rechaza, alerta con instrucciones para habilitarlo.
+- Cuando cierra el modal, libera la cámara (stops all tracks).
+
+### Infra
+- Estado nuevo `escanQR = { activo, stream, raf, detector, videoEl }`.
+- Funciones nuevas `iniciarScanQR`, `bucleScanQR`, `cerrarScanQR`.
+- Modal renderizado al final de `render()` con z-50.
+- Acciones nuevas `escanear-qr` y `cerrar-scan-qr`.
+- Cache busting `?v=1.9.26` y `CACHE_VERSION = 'album-2026-v1.9.26'`.
+
 ## v1.9.25 — 2026-05-19 — Importar TU álbum desde mensajes de otras apps
 
 ### Nuevo
