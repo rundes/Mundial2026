@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.9.30 — 2026-05-23 — Botón de borrar amigo visible en vista compacta
+
+### Cambio
+- Hasta ahora el botón **"Borrar amigo"** estaba escondido en la
+  vista expandida del card. Si nunca expandías el amigo, no había
+  forma de borrarlo. Ahora aparece un **ícono de tacho** a la
+  derecha del card en la vista compacta — un toque y se borra (con
+  confirm).
+- El layout del card compacto pasó de "un solo botón que cubre
+  todo" a "botón de toggle (parte izquierda) + botón de tacho
+  (parte derecha)", separados por un borde sutil.
+- En la vista expandida el botón "Borrar amigo" se promovió de un
+  link gris pequeño a un botón con ícono de tacho + texto rojo,
+  más visible.
+- En ambos casos sigue pidiendo confirmación antes de borrar.
+
+### Infra
+- Cache busting `?v=1.9.30` y `CACHE_VERSION = 'album-2026-v1.9.30'`.
+
 ## v1.9.29 — 2026-05-23 — Subir imagen del QR para decodificarla
 
 ### Nuevo
