@@ -1,5 +1,64 @@
 # Changelog
 
+## v2.0.0 — 2026-05-23 — 🎉 Release milestone: revisión integral + endurecimiento
+
+Hito mayor consolidando todo el trabajo entre v1.0 y v1.9.30. Sin
+features nuevas vs v1.9.30 (salvo un fix de seguridad chico), pero
+formaliza el estado actual como versión 2.0 estable.
+
+### Resumen de lo que trae 2.0 respecto a 1.0
+- **Vínculos persistentes entre usuarios** vía link AM26 + WhatsApp
+  como transporte (v1.9.0 → v1.9.16). Push manual con indicador
+  "cambios sin avisar" por amigo (v1.9.22). Sin servidor propio.
+- **Acortador de URLs en cascada** (TinyURL → is.gd → da.gd) con
+  fallback nunca al link largo — evita el truncamiento "Leer más"
+  de WhatsApp que rompía el import (v1.9.14 → v1.9.16).
+- **Importación de mensajes/QR de otras apps**: Figuri (figuri.app)
+  y Figuritas App (figuritas.app), tanto formato texto como QR
+  binario (con reverse-engineering del formato gzip+base64 + LSB-
+  first bitmap de 980 bits, v1.9.17 → v1.9.28).
+- **Escáner de QR nativo** con `BarcodeDetector` + opción de subir
+  imagen de QR (v1.9.26, v1.9.29).
+- **UI rediseñada en 4 pestañas** (Tengo · Repes · Amigos · Más,
+  v1.9.23) con cards de amigos colapsables (v1.9.18), buscadores
+  con dropdown de sugerencias (v1.9.20), íconos custom (v1.9.2),
+  y disclaimers completos en README (v1.9.2).
+- **Mensajes de WhatsApp compactos**: bandera + sigla en vez de
+  bandera + nombre, sin separadores box-drawing, sin headers de
+  grupo (v1.9.24). Reduce ~50% el tamaño del mensaje.
+- **Confirmaciones en acciones destructivas**: desmarcar figurita,
+  desmarcar equipo completo, borrar amigo, restaurar backup,
+  reset total (v1.9.19).
+- **Multi-import** de amigos (v1.9.18) y backup que **lista
+  amigos** en la parte legible (v1.9.18) + permite importar tu
+  álbum desde un mensaje de otra app (v1.9.25).
+- **Endurecimiento de seguridad/validación** integral: límites
+  consistentes (MAX_LEN_CODIGO 100KB, MAX_BYTES_ARCHIVO_BACKUP
+  5MB, **MAX_BYTES_QR_IMAGE 10MB nuevo en v2.0.0**, MAX_AMIGOS
+  50), validación de IDs contra ORDEN_FIGURITAS al restaurar e
+  importar, escape consistente con `escapeHtml`/`escapeAttr`,
+  protocolo `whatsapp://` en mobile para evitar la corrupción de
+  emojis de `wa.me`.
+
+### Fix de seguridad en v2.0.0
+- Agregado **límite de 10 MB para imagenes de QR** subidas. Evita
+  que el usuario cargue una imagen gigante (intencional o no) que
+  pueda colgar el navegador al procesarla con BarcodeDetector.
+
+### Revisión integral
+- Verifiqué que NO hay `eval`, `Function`, `document.write` en el
+  código activo. Todos los `innerHTML` write reciben contenido
+  generado por template literals con escape de cualquier dato del
+  usuario (nombre, código de amigo) vía `escapeHtml`/`escapeAttr`.
+- Verifiqué que los uploads (backup, imagen QR) tienen tope de
+  bytes y validación de tipo.
+- Verifiqué que el snapshot HTML que se comparte ("Compartir la
+  app") se toma ANTES del primer render para no filtrar datos del
+  usuario (esto se introdujo en v1.0 y sigue funcionando).
+- Verifiqué que el bitmap de Figuritas App no incluye Coca-Cola y
+  documenté la asunción en el código (`FA_TOTAL_BITS`).
+- Cache busting `?v=2.0.0` y `CACHE_VERSION = 'album-2026-v2.0.0'`.
+
 ## v1.9.30 — 2026-05-23 — Botón de borrar amigo visible en vista compacta
 
 ### Cambio

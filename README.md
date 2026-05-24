@@ -1,22 +1,32 @@
-# Mi Álbum Mundial 2026
+# Mi Álbum Mundial 2026 — v2.0
 
 App web gratuita para llevar el control del álbum de figuritas del Mundial 2026.
 Marcá las que tenés, anotá las repetidas y coordiná intercambios con tu familia y tus amigos por WhatsApp.
 
 **Abrir la app:** [rundes.github.io/Mundial2026](https://rundes.github.io/Mundial2026/)
 
+> **v2.0** — release milestone (mayo 2026). Consolida 30+ iteraciones del v1.x con
+> revisión integral de seguridad, importación cruzada con otras apps (Figuri,
+> Figuritas App), escáner de QR nativo y reverse-engineering del formato binario
+> de Figuritas App. Ver el [CHANGELOG](./CHANGELOG.md) para detalle completo.
+
 ---
 
 ## Características
 
 - **Álbum completo:** 12 grupos · 48 equipos · 20 figuritas por equipo · 19 especiales FWC · 14 especiales Coca-Cola · figurita 00 (tapa holográfica) — **994 figuritas en total**.
-- **Tres pestañas:** *Tengo* (marcar lo que ya pegaste), *Repes* (contar repetidas) y *Compartir* (familia, amigos, backup).
-- **Compartir por WhatsApp:**
-  - Lista de faltantes lista para mandarle a mamá/papá/familia con los nombres completos de los equipos.
-  - Lista de repetidas para intercambiar.
-  - Código compacto de tu álbum para pasarle a tus amigos.
-- **Coincidencias automáticas:** pegás el código de un amigo y la app te muestra qué le podés dar y qué te puede dar él.
-- **Backup en WhatsApp:** mandate tu álbum a vos mismo y queda guardado para siempre. Si cambiás de celular, lo recuperás desde el chat.
+- **Cuatro pestañas con propósito claro:**
+  - *Tengo*: marcar lo que ya pegaste, con confirmación antes de desmarcar.
+  - *Repes*: cargar repetidas con `+`/`−` (los círculos van adentro de cada casilla, no debajo).
+  - *Amigos*: tu nombre, lista de amigos con coincidencias, push manual y "agregar amigo" (link/QR/imagen/texto).
+  - *Más*: backup, instalar la app, compartir la app y privacidad.
+- **Buscadores con dropdown de sugerencias:** tipeás 3+ letras en Tengo o Repes y aparecen los equipos que matchean (bandera + sigla + nombre). Tap para fijar el filtro.
+- **Vínculos persistentes entre usuarios:** push manual con indicador "cambios sin avisar" por amigo. WhatsApp como transporte; sin servidor propio ni terceros nuevos.
+- **Multi-formato de import:** link de esta app (`?import=AM26|...`), código AM26 pelado, mensajes de Figuri o Figuritas App, **QR escaneado en vivo** o **imagen de QR subida**, y QR binario de Figuritas App (reverse-engineered).
+- **Acortador de URLs en cascada** (TinyURL → is.gd → da.gd) con `DecompressionStream` nativo para evitar dependencias.
+- **Backup en WhatsApp** que incluye nombre, marcadas, repes y todos los amigos. Sección legible con detalle por amigo + payload base64.
+- **Cards de amigos colapsables** con tacho de borrado siempre visible.
+- **Mensajes de WhatsApp compactos:** bandera + sigla en vez de bandera + nombre completo, sin separadores box-drawing, sin headers de grupo. ~50% más cortos para evitar el truncamiento "Leer más".
 - **Compartí la app:** un solo botón genera el archivo HTML para mandárselo a un amigo. El archivo no incluye tus datos.
 - **Instalar en pantalla de inicio:** en Android, un toque al botón "Instalar" lo agrega como app. En iPhone, instrucciones paso a paso con Safari → *Compartir → Agregar a Inicio*. El ícono es un diseño original (trofeo genérico estilizado sobre dos cartas, sobre fondo azul).
 - **Actualización automática:** la app avisa con un banner cuando hay una versión nueva publicada. Un toque a "Actualizar" la aplica sin perder tus datos. La versión actual y un botón de chequeo manual están siempre visibles en el footer.
