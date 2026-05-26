@@ -1,5 +1,42 @@
 # Changelog
 
+## v2.0.1 — 2026-05-23 — Fix: parser ignoraba la sección "ME FALTAN" con emoji adelante
+
+### Bug
+- Al pegar un mensaje generado por nuestra propia app (con encabezado
+  `🔍 ME FALTAN` y `🔄 PARA INTERCAMBIAR`) en "Agregar amigo
+  manualmente", el parser indicaba que el amigo tenía **994 figuritas**
+  (el álbum completo) en vez de las 640 reales.
+- Causa: las regex de detección de sección estaban ancladas al
+  inicio de línea (`^(Me faltan|Faltantes)\b`). Las líneas `🔍 ME
+  FALTAN` arrancan con un emoji (caracter no-letra), así que la
+  anchored regex fallaba. Resultado: la sección `faltantes` nunca
+  se activaba, las líneas de equipos se ignoraban, y como no había
+  faltantes parseadas, la app computaba `marcadas = TODAS - {}` =
+  todo el álbum.
+- Lo mismo para `✨ 00` (Doble Cero): no se detectaba.
+- El header `🔄 PARA INTERCAMBIAR` casualmente funcionaba porque
+  había un fallback `/🔄/.test(linea)` que matcheaba el emoji
+  anywhere.
+
+### Fix
+- Reemplacé `^(...)\b` por `\b(...)\b` — word boundaries matchean
+  tanto al inicio como después de un emoji (que es non-word char).
+- Agregué los emojis 🔍 y "Para intercambiar" como triggers
+  adicionales por simetría con el 🔄.
+- Doble Cero ahora se detecta con `/✨/` o `/\bDoble cero\b/i` o
+  el formato Figuri `/Special|Tapa: 00/`, cubriendo todos los
+  variantes (incluido el `(xN)` para repes).
+
+### Validación
+- Probado con el mensaje exacto reportado por el usuario:
+  - Antes: marcadas=994, repes=0
+  - Después: marcadas=640, repes-total=121 (matches el header
+    `📊 640/994 (64%) · 121 repes` exactamente)
+
+### Infra
+- Cache busting `?v=2.0.1` y `CACHE_VERSION = 'album-2026-v2.0.1'`.
+
 ## v2.0.0 — 2026-05-23 — 🎉 Release milestone: revisión integral + endurecimiento
 
 Hito mayor consolidando todo el trabajo entre v1.0 y v1.9.30. Sin
