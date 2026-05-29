@@ -1,14 +1,22 @@
-# Mi Álbum Mundial 2026 — v2.0
+# Mi Álbum Mundial 2026 — v2.1
 
 App web gratuita para llevar el control del álbum de figuritas del Mundial 2026.
 Marcá las que tenés, anotá las repetidas y coordiná intercambios con tu familia y tus amigos por WhatsApp.
 
 **Abrir la app:** [rundes.github.io/Mundial2026](https://rundes.github.io/Mundial2026/)
 
+> **v2.1** — mejora de UX en el filtro de figuritas (mayo 2026). Los
+> buscadores de las pestañas *Tengo* y *Repes* dejan de ser inputs de
+> texto con autocompletado y pasan a ser un **selector nativo** con
+> todos los tipos disponibles (la 00, los 48 equipos ordenados
+> alfabéticamente, FWC y CC). La sección de la 00 se reordena al inicio
+> de la pantalla, antes de los grupos. Ver el [CHANGELOG](./CHANGELOG.md)
+> para detalle completo.
+>
 > **v2.0** — release milestone (mayo 2026). Consolida 30+ iteraciones del v1.x con
 > revisión integral de seguridad, importación cruzada con otras apps (Figuri,
 > Figuritas App), escáner de QR nativo y reverse-engineering del formato binario
-> de Figuritas App. Ver el [CHANGELOG](./CHANGELOG.md) para detalle completo.
+> de Figuritas App.
 
 ---
 
@@ -20,7 +28,7 @@ Marcá las que tenés, anotá las repetidas y coordiná intercambios con tu fami
   - *Repes*: cargar repetidas con `+`/`−` (los círculos van adentro de cada casilla, no debajo).
   - *Amigos*: tu nombre, lista de amigos con coincidencias, push manual y "agregar amigo" (link/QR/imagen/texto).
   - *Más*: backup, instalar la app, compartir la app y privacidad.
-- **Buscadores con dropdown de sugerencias:** tipeás 3+ letras en Tengo o Repes y aparecen los equipos que matchean (bandera + sigla + nombre). Tap para fijar el filtro.
+- **Selector de tipo de figurita:** en Tengo y Repes hay un dropdown nativo con todos los tipos: *Todos*, **🅾️ La 00 (tapa)** primera, los 48 equipos ordenados alfabéticamente, **🏆 FWC (especiales)** y **🥤 CC (Coca-Cola)**. Descubrible, sin tipeo, picker nativo grande en mobile.
 - **Vínculos persistentes entre usuarios:** push manual con indicador "cambios sin avisar" por amigo. WhatsApp como transporte; sin servidor propio ni terceros nuevos.
 - **Multi-formato de import:** link de esta app (`?import=AM26|...`), código AM26 pelado, mensajes de Figuri o Figuritas App, **QR escaneado en vivo** o **imagen de QR subida**, y QR binario de Figuritas App (reverse-engineered).
 - **Acortador de URLs en cascada** (TinyURL → is.gd → da.gd) con `DecompressionStream` nativo para evitar dependencias.

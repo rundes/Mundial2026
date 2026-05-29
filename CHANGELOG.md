@@ -1,5 +1,51 @@
 # Changelog
 
+## v2.1.0 — 2026-05-29 — Buscadores → selector unificado de tipo + 00 al inicio
+
+### Feature
+- Reemplazamos el input de búsqueda libre (con dropdown de sugerencias
+  por 3+ letras) por un **selector único** de tipo de figurita en las
+  pestañas Tengo y Repes. El usuario ya no tipea: elige directamente
+  de una lista cerrada con todos los tipos disponibles.
+- Orden del selector:
+  1. **Todos los tipos** (sin filtro, default).
+  2. **🅾️ La 00 (tapa)** — primera del listado.
+  3. **48 equipos** ordenados alfabéticamente por nombre con
+     `localeCompare('es', { sensitivity: 'base' })` (acentos y
+     mayúsculas no afectan el orden).
+  4. **🏆 FWC (especiales)** — 19 figuritas del álbum FIFA.
+  5. **🥤 CC (Coca-Cola)** — 14 figuritas de la edición Argentina.
+- Reordenamos las secciones de la pantalla: la 00 ahora se renderiza
+  **antes** de los grupos A-L (era penúltima), reforzando que el
+  selector la presenta también primero.
+
+### Por qué
+- El buscador de texto + sugerencias era poderoso pero opaco: el
+  usuario no veía el universo completo de filtros y no sabía qué
+  tipear (grupo, código, nombre, "FWC"…). El placeholder con la
+  lista de hints (`Equipo, grupo (A-L), FWC, CC, 00…`) admitía
+  esto implícitamente.
+- Un select nativo es **descubrible** (mostrar todo), **rápido**
+  en mobile (picker nativo grande) y **cero ambigüedad** (no hay
+  texto libre que matchee parcialmente varios equipos).
+- La 00 al inicio refleja que es la figurita más codiciada y
+  estructuralmente única (tapa holográfica, no parte de ningún
+  grupo).
+
+### Compatibilidad
+- `aplicarBusqueda(modo)` no cambió: sigue usando los strings
+  `busquedaTengo` / `busquedaRepes` como query y matcheando contra
+  `code`, `nombre`, `grupoCoincide` y `especialCoincide`. El select
+  setea el code exacto (ARG, BRA…) o el tag (`00`, `FWC`, `CC`),
+  que matchean igual.
+- Los handlers obsoletos (`limpiar-busqueda`, `seleccionar-equipo`,
+  `actualizarSugerencias`) quedan inactivos por guards `if (cont)`
+  / `if (btnX)` — no se borran para minimizar el diff y porque no
+  tienen costo en runtime.
+
+### Infra
+- Cache busting `?v=2.1.0` y `CACHE_VERSION = 'album-2026-v2.1.0'`.
+
 ## v2.0.1 — 2026-05-23 — Fix: parser ignoraba la sección "ME FALTAN" con emoji adelante
 
 ### Bug
