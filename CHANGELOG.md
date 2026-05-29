@@ -1,5 +1,35 @@
 # Changelog
 
+## v2.1.1 — 2026-05-29 — Fix: selector se cerraba al primer tap en Android
+
+### Bug
+- En Android, al tocar el selector nuevo (introducido en v2.1.0) por
+  primera vez, el picker nativo se abría y se cerraba inmediatamente.
+  El segundo tap funcionaba bien. Patrón repetible: cada vez que se
+  abría el selector parecía fallar.
+
+### Causa
+- El carrusel "Casi están / Necesitan amor" del tab Tengo tiene un
+  `setInterval(..., 5000)` que llama `render()` para rotar el slide.
+- `render()` reescribe `#app.innerHTML` entero, destruyendo y
+  recreando el `<select>`. En Android, cuando se reemplaza el
+  elemento que tiene el picker nativo abierto, el picker se cierra
+  de inmediato.
+- Probabilidad de colisión = alta: con un tick cada 5s y el usuario
+  tomándose ~1-3s en abrir el picker y elegir, hay buena chance de
+  que el tick caiga en el medio de la interacción.
+
+### Fix
+- Antes de re-renderizar en el tick del carrusel, chequear
+  `document.activeElement`. Si es un `SELECT`, `INPUT` o `TEXTAREA`,
+  saltar este tick. Cuando el usuario termina la interacción, el
+  carrusel vuelve a rotar normalmente.
+- Solución mínima: 1 línea de guard, sin tocar la lógica del
+  carrusel ni del selector.
+
+### Infra
+- Cache busting `?v=2.1.1` y `CACHE_VERSION = 'album-2026-v2.1.1'`.
+
 ## v2.1.0 — 2026-05-29 — Buscadores → selector unificado de tipo + 00 al inicio
 
 ### Feature
